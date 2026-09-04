@@ -1119,7 +1119,7 @@ const GULF_NAMES: string[] = [
   'سعاد حمود الرومي',
   'سهيل عبيد الكتبي',
   'شما خليفة القاسم',
-  'عبدالمجيد بن سعود العنزي',
+  'عبد��لمجيد بن سعود العنزي',
   'عبير بنت سلمان العمري',
   'مشعل أحمد الحجي',
   'نوال فهد الدبوس',
@@ -1492,23 +1492,23 @@ export default function Index() {
     || new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   const appContent = (
-    <div className="enterprise-shell min-h-screen bg-slate-50 flex" dir="rtl" style={iCfg.enabled ? { minHeight: '100%' } : undefined}>
+    <div className="enterprise-shell min-h-screen bg-background flex" dir="rtl" style={iCfg.enabled ? { minHeight: '100%' } : undefined}>
       {/* ── Enterprise Sidebar ── */}
       <motion.aside
-        animate={{ width: sidebarCollapsed ? 72 : 256 }}
+        animate={{ width: sidebarCollapsed ? 76 : 264 }}
         transition={{ duration: 0.25, ease: 'easeInOut' }}
-        className="bg-gradient-to-b from-slate-900 to-slate-800 text-white hidden lg:flex flex-col sticky top-0 h-screen shadow-2xl z-20 overflow-hidden flex-shrink-0"
+        className="bg-gradient-to-b from-[#0f2140] via-[#0c1a33] to-[#0a1424] text-white hidden lg:flex flex-col sticky top-0 h-screen shadow-2xl z-20 overflow-hidden flex-shrink-0 border-l border-white/5"
       >
         {/* Logo */}
         <div className="p-4 border-b border-white/10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg flex-shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-900/40 ring-1 ring-white/10 flex-shrink-0">
             <Database size={20} className="text-white" />
           </div>
           <AnimatePresence>
             {!sidebarCollapsed && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
-                <p className="font-black text-sm leading-tight whitespace-nowrap">مركز المشتركين</p>
-                <p className="text-xs text-slate-400 whitespace-nowrap">Moshtarikeen Hub</p>
+                <p className="font-black text-sm leading-tight whitespace-nowrap tracking-tight">مركز المشتركين</p>
+                <p className="text-[11px] text-blue-300/70 whitespace-nowrap tracking-[0.15em] uppercase">Moshtarikeen Hub</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -1520,8 +1520,8 @@ export default function Index() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="mx-3 mt-3 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-              <span className="text-xs text-emerald-400 font-medium">النظام يعمل</span>
-              <span className="mr-auto text-xs text-slate-500">{subscribers.length} مشترك</span>
+              <span className="text-xs text-emerald-300 font-semibold">النظام يعمل</span>
+              <span className="mr-auto text-xs text-blue-200/60 tabular-nums">{subscribers.length} مشترك</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1536,11 +1536,14 @@ export default function Index() {
           {navItems.map(item => (
             <button key={item.tab} onClick={() => setActiveTab(item.tab)}
               title={sidebarCollapsed ? item.label : undefined}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+              className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 relative ${
                 activeTab === item.tab
-                  ? 'bg-gradient-to-l from-emerald-600/30 to-teal-600/20 text-emerald-400 border border-emerald-500/30 shadow-lg'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  ? 'bg-gradient-to-l from-blue-600/30 to-indigo-600/15 text-white border border-blue-400/30 shadow-lg shadow-blue-950/40'
+                  : 'text-blue-100/50 hover:bg-white/5 hover:text-white'
               } ${sidebarCollapsed ? 'justify-center' : ''}`}>
+              {activeTab === item.tab && (
+                <span className="absolute right-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-l-full bg-blue-400" />
+              )}
               <span className="flex-shrink-0">{item.icon}</span>
               <AnimatePresence>
                 {!sidebarCollapsed && (
@@ -1618,15 +1621,15 @@ export default function Index() {
         {/* User + Toggle */}
         <div className="p-3 border-t border-white/10">
           {!sidebarCollapsed && (
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 mb-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-center gap-2 p-2 rounded-xl bg-white/5 ring-1 ring-white/5 mb-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 ring-1 ring-white/10">
                 <User size={14} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-black text-white truncate">المدير العام</p>
-                <p className="text-xs text-slate-500 truncate">admin@system.com</p>
+                <p className="text-[11px] text-blue-200/50 truncate">admin@system.com</p>
               </div>
-              <Lock size={12} className="text-slate-600 flex-shrink-0" />
+              <Lock size={12} className="text-blue-300/40 flex-shrink-0" />
             </div>
           )}
           {!sidebarCollapsed && (
@@ -1645,22 +1648,23 @@ export default function Index() {
       {/* ── Main ── */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
+        <header className="h-16 bg-card/95 backdrop-blur border-b border-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center gap-2">
             {/* Mobile nav icons */}
-            <div className="flex lg:hidden gap-1">
+            <div className="flex lg:hidden gap-1 overflow-x-auto max-w-[55vw]">
               {navItems.map(item => (
                 <button key={item.tab} onClick={() => setActiveTab(item.tab)}
-                  className={`p-1.5 rounded-lg transition-colors ${activeTab === item.tab ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                  className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${activeTab === item.tab ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30' : 'bg-secondary text-muted-foreground'}`}>
                   {React.cloneElement(item.icon as React.ReactElement, { size: 15 })}
                 </button>
               ))}
             </div>
-            <div className="hidden lg:flex items-center gap-2">
-              <h1 className="text-base font-black text-slate-800">
+            <div className="hidden lg:flex items-center gap-2.5">
+              <span className="h-6 w-1 rounded-full bg-blue-600" />
+              <h1 className="text-base font-black text-foreground tracking-tight">
                 {navItems.find(n => n.tab === activeTab)?.label ?? 'النظام'}
               </h1>
-              <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs">v2.0</Badge>
+              <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">v2.0</Badge>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -1686,11 +1690,11 @@ export default function Index() {
               <Bell size={15} />
               <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border border-white" />
             </Button>
-            <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-slate-200">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+            <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-border">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center ring-1 ring-blue-200">
                 <User size={13} className="text-white" />
               </div>
-              <p className="text-xs font-bold text-slate-700">المدير العام</p>
+              <p className="text-xs font-bold text-foreground">المدير العام</p>
             </div>
           </div>
         </header>
@@ -1824,12 +1828,12 @@ export default function Index() {
 
         {/* ── Fixed: Mobile-only nav bar (sits below status bar, hidden on desktop) ── */}
         <nav
-          className="lg:hidden fixed left-0 right-0 bg-gradient-to-b from-slate-900 to-slate-800 flex items-center gap-1 z-[9998] overflow-x-auto"
+          className="lg:hidden fixed left-0 right-0 bg-gradient-to-b from-[#0f2140] via-[#0c1a33] to-[#0a1424] flex items-center gap-1 z-[9998] overflow-x-auto"
           style={{ top: 44, height: 44, paddingLeft: 8 + iSidePad, paddingRight: 8 + iSidePad }}
         >
           {navItems.map(item => (
             <button key={item.tab} onClick={() => setActiveTab(item.tab)}
-              className={`flex-shrink-0 p-2 rounded-xl transition-colors ${activeTab === item.tab ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}>
+              className={`flex-shrink-0 p-2 rounded-xl transition-colors ${activeTab === item.tab ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-blue-100/50 hover:text-white hover:bg-white/10'}`}>
               {React.cloneElement(item.icon as React.ReactElement, { size: 17 })}
             </button>
           ))}
@@ -1844,11 +1848,11 @@ export default function Index() {
           <motion.aside
             animate={{ width: sidebarCollapsed ? 72 : 256 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="bg-gradient-to-b from-slate-900 to-slate-800 text-white hidden lg:flex flex-col sticky h-[calc(100vh-44px)] shadow-2xl z-10 overflow-hidden flex-shrink-0"
+            className="bg-gradient-to-b from-[#0f2140] via-[#0c1a33] to-[#0a1424] text-white hidden lg:flex flex-col sticky h-[calc(100vh-44px)] shadow-2xl z-10 overflow-hidden flex-shrink-0"
             style={{ top: 44 }}
           >
             <div className="p-4 border-b border-white/10 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg flex-shrink-0">
                 <Database size={20} className="text-white" />
               </div>
               {!sidebarCollapsed && <div><p className="font-black text-sm leading-tight whitespace-nowrap">مركز المشتركين</p><p className="text-xs text-slate-400 whitespace-nowrap">Moshtarikeen Hub</p></div>}
@@ -1856,7 +1860,7 @@ export default function Index() {
             <nav className="flex-1 overflow-y-auto p-2 space-y-1 mt-2">
               {navItems.map(item => (
                 <button key={item.tab} onClick={() => setActiveTab(item.tab)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === item.tab ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === item.tab ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-blue-100/50 hover:text-white hover:bg-white/10'}`}>
                   {item.icon}
                   {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
                 </button>
@@ -1981,8 +1985,8 @@ function DashboardTab({ stats, subscribers, operations, institutionalText, secti
       {/* Institutional Text */}
       {institutionalText && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="border-none shadow-md ring-2 ring-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden">
-            <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-400" />
+          <Card className="border-none shadow-md ring-2 ring-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 overflow-hidden">
+            <div className="h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-500" />
             <CardContent className="p-8 text-center">
               <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
                 <Star size={24} className="text-emerald-600" />
@@ -2490,7 +2494,7 @@ function SystemAdminTab({ systemConfig, onConfigChange, subscribersCount, sectio
 
       {/* ── 2. إدارة البطاقات الأربع ── */}
       <Card className="border-none shadow-sm ring-1 ring-slate-200 overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
+        <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-black text-slate-800 flex items-center gap-2">
             <BarChart3 size={18} className="text-emerald-500" /> إدارة البطاقات الأربع الرئيسية
@@ -2582,7 +2586,7 @@ function SystemAdminTab({ systemConfig, onConfigChange, subscribersCount, sectio
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <Button onClick={saveCards} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 px-6">
+            <Button onClick={saveCards} className="bg-blue-600 hover:bg-blue-700 gap-1.5 px-6">
               <Save size={14} /> حفظ تعديلات البطاقات
             </Button>
           </div>
@@ -3059,8 +3063,8 @@ const PLACEMENT_LABELS: Record<ExperiencePlacement, string> = {
 };
 
 const TONE_CLASSES: Record<CustomQueryButton['tone'], string> = {
-  emerald: 'from-emerald-500 to-teal-500 shadow-emerald-500/20',
-  blue: 'from-blue-500 to-indigo-500 shadow-blue-500/20',
+  emerald: 'from-emerald-500 to-green-600 shadow-emerald-500/20',
+  blue: 'from-blue-500 to-indigo-600 shadow-blue-500/20',
   amber: 'from-amber-400 to-orange-500 shadow-amber-500/20',
   violet: 'from-violet-500 to-fuchsia-500 shadow-violet-500/20',
 };
@@ -3448,7 +3452,7 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
               <div className="relative flex-1">
                 <Input
                   placeholder="أدخل الاسم، IBAN، رقم الهاتف..."
-                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-500 pr-11 text-sm rounded-xl focus:bg-white/15 focus:border-emerald-400 transition-all h-12"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-500 pr-11 text-sm rounded-xl focus:bg-white/15 focus:border-blue-400 transition-all h-12"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && runSearch()}
@@ -3457,7 +3461,7 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
                 <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
               </div>
               <Button onClick={runSearch} disabled={isSearching}
-                className="h-12 w-full sm:w-auto px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/25 transition-all whitespace-nowrap disabled:opacity-70">
+                className="h-12 w-full sm:w-auto px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 transition-all whitespace-nowrap disabled:opacity-70">
                 {isSearching ? 'جاري البحث...' : 'استعلام الآن'}
               </Button>
               {(searched || isSearching) && (
@@ -3478,7 +3482,7 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
                   </div>
                   <div className="relative h-4 bg-white/10 rounded-full overflow-hidden">
                     <motion.div
-                      className="absolute inset-y-0 right-0 bg-gradient-to-l from-emerald-400 to-teal-400 rounded-full"
+                      className="absolute inset-y-0 right-0 bg-gradient-to-l from-blue-500 to-indigo-500 rounded-full"
                       style={{ width: `${progress}%`, left: 'auto' }}
                       animate={{ width: `${progress}%` }}
                       transition={{ duration: 0.1, ease: 'linear' }}
@@ -3533,11 +3537,11 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5">
             {/* Profile Card */}
             <Card className="border-none shadow-md ring-1 ring-slate-200 overflow-hidden">
-              <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-400" />
+              <div className="h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-500" />
               <CardContent className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start gap-5">
                   <div className="relative flex-shrink-0">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
                       <User size={36} className="text-white" />
                     </div>
                     <div className="absolute -bottom-1 -left-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
@@ -3680,7 +3684,7 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
               )}
               {withdrawalStage === 'confirm' && (
                 <Button onClick={() => setWithdrawalStage('processing')}
-                  className="gap-2 h-11 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black rounded-2xl shadow-lg shadow-emerald-500/25 transition-all text-base">
+                  className="gap-2 h-11 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-blue-500/25 transition-all text-base">
                   <CheckCircle2 size={18} /> تأكيد سحب الأرباح
                 </Button>
               )}
@@ -3943,7 +3947,7 @@ function AddOperationsTab({ operations, onOperationsChange, subscriberNames, sec
           <Button onClick={exportCSV} variant="outline" size="sm" className="gap-1.5 border-slate-200 text-slate-600 h-9">
             <FileDown size={14} /> تصدير CSV
           </Button>
-          <Button onClick={openAdd} className="bg-emerald-600 hover:bg-emerald-700 gap-2 shadow-sm">
+          <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700 gap-2 shadow-sm">
             <Plus size={16} /> إضافة عملية
           </Button>
         </div>
@@ -4038,7 +4042,7 @@ function AddOperationsTab({ operations, onOperationsChange, subscriberNames, sec
             className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
+              <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
               <div className="p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="text-base font-black text-slate-800">{editId ? 'تعديل عملية' : 'إضافة عملية جديدة'}</h3>
@@ -4082,7 +4086,7 @@ function AddOperationsTab({ operations, onOperationsChange, subscriberNames, sec
                 </div>
                 <div className="flex justify-end gap-2 mt-5">
                   <Button variant="outline" onClick={() => setIsOpen(false)} className="border-slate-200">إلغاء</Button>
-                  <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 px-5">
+                  <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 gap-1.5 px-5">
                     <Save size={13} /> {editId ? 'حفظ التعديل' : 'إضافة'}
                   </Button>
                 </div>
@@ -4466,7 +4470,7 @@ function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, opera
 
       {/* Form */}
       <Card className="border-none shadow-sm ring-1 ring-slate-200 overflow-hidden">
-        <div className={`h-1 ${editId ? 'bg-gradient-to-r from-blue-400 to-purple-400' : 'bg-gradient-to-r from-emerald-400 to-teal-400'}`} />
+        <div className={`h-1 ${editId ? 'bg-gradient-to-r from-blue-400 to-purple-400' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`} />
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-black text-slate-800 flex items-center gap-2">
             {editId ? <><Pencil size={15} className="text-blue-500" />تعديل بيانات المشترك</> : <><UserPlus size={15} className="text-emerald-500" />بيانات المشترك الجديد</>}
@@ -5032,7 +5036,7 @@ function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, opera
                     <Input type="date" value={tempOp.date} onChange={e => setTempOp(p => ({ ...p, date: e.target.value }))} className="h-9 border-slate-200 text-sm" />
                   </div>
                 </div>
-                <Button type="button" size="sm" onClick={() => { setPendingOps(p => [...p, { ...tempOp }]); setTempOp({ operation: 'توزيع ارباح', amount: '', date: todayStr(), status: 'مكتمل' }); }} className="bg-emerald-600 hover:bg-emerald-700 gap-1.5 text-xs h-8 px-4">
+                <Button type="button" size="sm" onClick={() => { setPendingOps(p => [...p, { ...tempOp }]); setTempOp({ operation: 'توزيع ارباح', amount: '', date: todayStr(), status: 'مكتمل' }); }} className="bg-blue-600 hover:bg-blue-700 gap-1.5 text-xs h-8 px-4">
                   <Plus size={12} /> إضافة للقائمة
                 </Button>
               </div>
@@ -5040,7 +5044,7 @@ function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, opera
           </div>
 
           <div className="flex items-center gap-3 mt-5">
-            <Button onClick={handleSave} className={`gap-1.5 px-6 ${editId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+            <Button onClick={handleSave} className={`gap-1.5 px-6 ${editId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
               <Save size={14} /> {editId ? 'حفظ التعديل' : 'إضافة المشترك'}
             </Button>
             {editId && <Button variant="outline" onClick={cancelEdit} className="border-slate-200 text-slate-600">إلغاء</Button>}
@@ -5063,7 +5067,7 @@ function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, opera
             <AlertDialogDescription className="text-right">هل تريد حفظ رقم الآيبان مع بيانات المشترك؟ إذا اخترت لا سيتم مسحه قبل الحفظ.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
-            <AlertDialogAction onClick={()=>{ setPendingIbanSave(true); setShowIbanConfirm(false); setTimeout(()=>handleSave(),100); }} className="bg-emerald-600 hover:bg-emerald-700">نعم، احفظ</AlertDialogAction>
+            <AlertDialogAction onClick={()=>{ setPendingIbanSave(true); setShowIbanConfirm(false); setTimeout(()=>handleSave(),100); }} className="bg-blue-600 hover:bg-blue-700">نعم، احفظ</AlertDialogAction>
             <AlertDialogCancel onClick={()=>{ set('iban',''); setPendingIbanSave(true); setShowIbanConfirm(false); setTimeout(()=>handleSave(),100); }}>لا، امسح</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -5075,7 +5079,7 @@ function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, opera
             <AlertDialogDescription className="text-right">هل تريد حفظ رقم الحساب البنكي؟</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
-            <AlertDialogAction onClick={()=>{ setPendingAccountSave(true); setShowAccountConfirm(false); setTimeout(()=>handleSave(),100); }} className="bg-emerald-600 hover:bg-emerald-700">نعم</AlertDialogAction>
+            <AlertDialogAction onClick={()=>{ setPendingAccountSave(true); setShowAccountConfirm(false); setTimeout(()=>handleSave(),100); }} className="bg-blue-600 hover:bg-blue-700">نعم</AlertDialogAction>
             <AlertDialogCancel onClick={()=>{ set('accountNumber',''); setPendingAccountSave(true); setShowAccountConfirm(false); setTimeout(()=>handleSave(),100); }}>لا</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -5128,7 +5132,7 @@ function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, opera
                   const pg = page <= 3 ? i + 1 : page + i - 2;
                   if (pg > totalPages) return null;
                   return (
-                    <Button key={pg} size="sm" className={`h-8 w-8 p-0 text-xs ${pg === page ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`} onClick={() => setPage(pg)}>{pg}</Button>
+                    <Button key={pg} size="sm" className={`h-8 w-8 p-0 text-xs ${pg === page ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`} onClick={() => setPage(pg)}>{pg}</Button>
                   );
                 })}
                 <Button variant="outline" size="sm" className="h-8 px-3 border-slate-200 gap-1 text-xs" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
@@ -5148,7 +5152,7 @@ function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, opera
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteId && doDelete(deleteId)} className="bg-red-600 hover:bg-red-700">حذف المشترك</AlertDialogAction>
+            <AlertDialogAction onClick={() => deleteId && doDelete(deleteId)} className="bg-red-600 hover:bg-red-700">ح��ف المشترك</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -5854,7 +5858,7 @@ function downloadSubscriberPNG(found: Subscriber, subscriberOps: Operation[]) {
   ctx.lineTo(W - PAD, y + 5); ctx.lineTo(PAD, y + 5);
   ctx.quadraticCurveTo(PAD, y, PAD + 14, y);
   ctx.closePath(); ctx.fill();
-  // Avatar: emerald-400 → teal-500 rounded square (matching from-emerald-400 to-teal-500)
+  // Avatar: emerald-400 → teal-500 rounded square (matching from-blue-500 to-indigo-600)
   const avGrad = ctx.createLinearGradient(PAD + 18, y + 14, PAD + 82, y + 86);
   avGrad.addColorStop(0, '#34d399'); avGrad.addColorStop(1, '#14b8a6');
   ctx.fillStyle = avGrad;
@@ -7572,7 +7576,7 @@ function ReportsTab({ subscribers, operations }: { subscribers: Subscriber[]; op
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'إجمالي الاشتراكات', value: `${totalRevenue.toLocaleString()} ر.س`, icon: <Wallet size={18} className="text-emerald-600" />, bg: 'bg-emerald-50', color: 'text-emerald-700' },
-          { label: 'إجمالي الأرباح', value: `${totalProfits.toLocaleString()} ر.س`, icon: <TrendingUp size={18} className="text-blue-600" />, bg: 'bg-blue-50', color: 'text-blue-700' },
+          { label: 'إجمالي الأ��باح', value: `${totalProfits.toLocaleString()} ر.س`, icon: <TrendingUp size={18} className="text-blue-600" />, bg: 'bg-blue-50', color: 'text-blue-700' },
           { label: 'الرسوم المستحقة', value: `${totalFees.toLocaleString()} ر.س`, icon: <AlertCircle size={18} className="text-orange-500" />, bg: 'bg-orange-50', color: 'text-orange-700' },
           { label: 'نسبة النشاط', value: `${activeRate}%`, icon: <Activity size={18} className="text-purple-600" />, bg: 'bg-purple-50', color: 'text-purple-700' },
         ].map((c, i) => (
@@ -7823,7 +7827,7 @@ function SettingsTab({ isDark, onDarkToggle, subscribers, operations, systemConf
 
         {/* Backup & Restore */}
         <Card className="border-none shadow-sm ring-1 ring-slate-200 overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
+          <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-black text-slate-800 flex items-center gap-2">
               <Database size={18} className="text-emerald-500" /> النسخ الاحتياطي والاستعادة
@@ -7831,7 +7835,7 @@ function SettingsTab({ isDark, onDarkToggle, subscribers, operations, systemConf
             <CardDescription className="text-xs">تصدير كامل البيانات أو استيرادها من ملف JSON</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button onClick={exportBackup} className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={exportBackup} className="w-full gap-2 bg-blue-600 hover:bg-blue-700">
               <FileDown size={16} /> تصدير نسخة احتياطية (JSON)
             </Button>
             <input ref={importRef} type="file" accept=".json" className="hidden" onChange={importBackup} />
