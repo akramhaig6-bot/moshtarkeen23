@@ -77,5 +77,37 @@
     @apply bg-background text-foreground;
     font-family: 'Cairo', ui-sans-serif, system-ui, sans-serif;
     direction: rtl;
+    background:
+      radial-gradient(circle at 90% -10%, rgba(20, 184, 166, 0.08), transparent 34rem),
+      radial-gradient(circle at 10% 0%, rgba(99, 102, 241, 0.06), transparent 28rem),
+      #f8fafc;
+    min-width: 320px;
   }
+}
+
+@layer utilities {
+  .dashboard-grid-bg {
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
