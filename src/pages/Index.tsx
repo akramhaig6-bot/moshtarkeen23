@@ -793,8 +793,24 @@ function resolveSubscriberExperience(experience?: Partial<SubscriberExperience>)
   return {
     ...DEFAULT_SYSTEM_CONFIG.subscriberExperience,
     ...(experience ?? {}),
-    sections: experience?.sections ?? DEFAULT_SYSTEM_CONFIG.subscriberExperience.sections,
-    buttons: experience?.buttons ?? DEFAULT_SYSTEM_CONFIG.subscriberExperience.buttons,
+    sections: (experience?.sections ?? DEFAULT_SYSTEM_CONFIG.subscriberExperience.sections).map((section, index) => ({
+      id: section.id || `legacy-section-${index}`,
+      title: section.title || '',
+      content: section.content || '',
+      placement: section.placement || 'summary',
+      visible: section.visible !== false,
+      accent: section.accent || '#0f766e',
+    })),
+    buttons: (experience?.buttons ?? DEFAULT_SYSTEM_CONFIG.subscriberExperience.buttons).map((button, index) => ({
+      id: button.id || `legacy-button-${index}`,
+      label: button.label || '',
+      content: button.content || '',
+      helperText: button.helperText || '',
+      duration: Math.max(1, Math.min(60, Number(button.duration) || 8)),
+      placement: button.placement || 'summary',
+      visible: button.visible !== false,
+      tone: button.tone || 'emerald',
+    })),
   };
 }
 
@@ -3063,14 +3079,20 @@ function SubscriberExperienceBuilder({ value, onChange }: {
     update({ buttons: value.buttons.map(button => button.id === id ? { ...button, ...patch } : button) });
 
   const addSection = () => {
-    if (!newSection.title.trim()) return;
+    if (!newSection.title.trim()) {
+      toast.error('اكتب اسم القسم أولاً ثم اضغط إضافة');
+      return;
+    }
     update({ sections: [...value.sections, { ...newSection, id: uid(), visible: true }] });
     setNewSection({ title: '', content: '', placement: 'summary', accent: '#0f766e' });
     toast.success('تمت إضافة قسم مخصص');
   };
 
   const addButton = () => {
-    if (!newButton.label.trim()) return;
+    if (!newButton.label.trim()) {
+      toast.error('اكتب تسمية الزر أولاً ثم اضغط إضافة');
+      return;
+    }
     update({ buttons: [...value.buttons, { ...newButton, id: uid(), visible: true, duration: Math.max(1, Math.min(60, newButton.duration)) }] });
     setNewButton({ label: '', content: '', helperText: '', duration: 8, placement: 'summary', tone: 'emerald' });
     toast.success('تمت إضافة زر مخصص');
@@ -3095,7 +3117,10 @@ function SubscriberExperienceBuilder({ value, onChange }: {
               خصص اسم الشركة، شعارها، الأقسام والأزرار التي تظهر داخل نتيجة الاستعلام. تحفظ الإعدادات محليًا في الواجهة.
             </CardDescription>
           </div>
-          <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200">Frontend</Badge>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200">Frontend</Badge>
+            <Badge variant="outline" className="text-emerald-700 border-emerald-200 bg-emerald-50">يحفظ تلقائياً</Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -3220,8 +3245,8 @@ function SubscriberQueryExperience({ experience, subscriberName }: { experience:
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [running, setRunning] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sections = experience.sections.filter(section => section.visible && section.title.trim());
-  const buttons = experience.buttons.filter(button => button.visible && button.label.trim());
+  const sections = experience.sections.filter(section => section.visible !== false && section.title.trim());
+  const buttons = experience.buttons.filter(button => button.visible !== false && button.label.trim());
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
