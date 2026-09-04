@@ -105,6 +105,37 @@ interface Stats {
   pendingRequests: string;
 }
 
+type ExperiencePlacement = 'top' | 'summary' | 'bottom';
+
+interface CustomQuerySection {
+  id: string;
+  title: string;
+  content: string;
+  placement: ExperiencePlacement;
+  visible: boolean;
+  accent: string;
+}
+
+interface CustomQueryButton {
+  id: string;
+  label: string;
+  content: string;
+  helperText: string;
+  duration: number;
+  placement: ExperiencePlacement;
+  visible: boolean;
+  tone: 'emerald' | 'blue' | 'amber' | 'violet';
+}
+
+interface SubscriberExperience {
+  companyName: string;
+  companyLogo: string;
+  welcomeTitle: string;
+  welcomeText: string;
+  sections: CustomQuerySection[];
+  buttons: CustomQueryButton[];
+}
+
 interface SystemConfig {
   sectionNames: {
     dashboard: string;
@@ -130,6 +161,7 @@ interface SystemConfig {
   };
   institutionalText: string;
   systemDate: string;
+  subscriberExperience: SubscriberExperience;
   iPhoneConfig: {
     enabled: boolean;
     dynamicIsland: 'normal' | 'recording';
@@ -727,6 +759,14 @@ const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   },
   institutionalText: '',
   systemDate: '',
+  subscriberExperience: {
+    companyName: 'مركز المشتركين',
+    companyLogo: '',
+    welcomeTitle: 'بوابة الاستعلام المؤسسية',
+    welcomeText: 'أدخل بياناتك للوصول إلى ملخص حسابك وعملياتك.',
+    sections: [],
+    buttons: [],
+  },
   iPhoneConfig: {
     enabled: false,
     dynamicIsland: 'normal',
@@ -748,6 +788,15 @@ const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
     heightScale: 100,
   },
 };
+
+function resolveSubscriberExperience(experience?: Partial<SubscriberExperience>): SubscriberExperience {
+  return {
+    ...DEFAULT_SYSTEM_CONFIG.subscriberExperience,
+    ...(experience ?? {}),
+    sections: experience?.sections ?? DEFAULT_SYSTEM_CONFIG.subscriberExperience.sections,
+    buttons: experience?.buttons ?? DEFAULT_SYSTEM_CONFIG.subscriberExperience.buttons,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────
 // iPhone mode defaults (used whenever config is partial/legacy)
@@ -1672,7 +1721,7 @@ export default function Index() {
           {activeTab === 'addSubscriber' && (
             <motion.div key="addSub" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="p-4 lg:p-8 space-y-6 max-w-[1600px] mx-auto w-full">
-              <AddSubscriberTab subscribers={subscribers} onSubscribersChange={setSubscribers} sectionName={sn.addSubscriber} operations={operations} onOperationsChange={setOperations} />
+              <AddSubscriberTab subscribers={subscribers} onSubscribersChange={setSubscribers} sectionName={sn.addSubscriber} operations={operations} onOperationsChange={setOperations} systemConfig={systemConfig} onConfigChange={updateConfig} />
             </motion.div>
           )}
           {activeTab === 'advanced' && (
@@ -1806,7 +1855,7 @@ export default function Index() {
               {activeTab === 'systemAdmin' && <motion.div key="sa" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><SystemAdminTab systemConfig={systemConfig} onConfigChange={updateConfig} subscribersCount={subscribers.length} sectionName={sn.systemAdmin} operations={operations} onOperationsChange={setOperations} /></motion.div>}
               {activeTab === 'admin' && <motion.div key="adm" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><AdminPanel subscribers={subscribers} operations={operations} sectionName={sn.admin} systemConfig={systemConfig} /></motion.div>}
               {activeTab === 'addOperations' && <motion.div key="ao" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><AddOperationsTab operations={operations} onOperationsChange={setOperations} subscriberNames={subscribers.map(s => s.name)} sectionName={sn.addOperations} /></motion.div>}
-              {activeTab === 'addSubscriber' && <motion.div key="as" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><AddSubscriberTab subscribers={subscribers} onSubscribersChange={setSubscribers} sectionName={sn.addSubscriber} operations={operations} onOperationsChange={setOperations} /></motion.div>}
+               {activeTab === 'addSubscriber' && <motion.div key="as" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><AddSubscriberTab subscribers={subscribers} onSubscribersChange={setSubscribers} sectionName={sn.addSubscriber} operations={operations} onOperationsChange={setOperations} systemConfig={systemConfig} onConfigChange={updateConfig} /></motion.div>}
               {activeTab === 'reports' && <motion.div key="rep" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><ReportsTab subscribers={subscribers} operations={operations} /></motion.div>}
               {activeTab === 'settings' && <motion.div key="set" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><SettingsTab isDark={isDark} onDarkToggle={() => setIsDark(!isDark)} subscribers={subscribers} operations={operations} systemConfig={systemConfig} onSubscribersChange={setSubscribers} onOperationsChange={setOperations} onConfigChange={updateConfig} /></motion.div>}
             </AnimatePresence>
@@ -2984,6 +3033,262 @@ function IPhoneLauncherSettings({ systemConfig, onConfigChange }: {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Subscriber experience builder — frontend/localStorage only
+// ─────────────────────────────────────────────────────────────
+
+const PLACEMENT_LABELS: Record<ExperiencePlacement, string> = {
+  top: 'أعلى نتيجة الاستعلام',
+  summary: 'بعد ملخص المشترك',
+  bottom: 'أسفل نتيجة الاستعلام',
+};
+
+const TONE_CLASSES: Record<CustomQueryButton['tone'], string> = {
+  emerald: 'from-emerald-500 to-teal-500 shadow-emerald-500/20',
+  blue: 'from-blue-500 to-indigo-500 shadow-blue-500/20',
+  amber: 'from-amber-400 to-orange-500 shadow-amber-500/20',
+  violet: 'from-violet-500 to-fuchsia-500 shadow-violet-500/20',
+};
+
+function SubscriberExperienceBuilder({ value, onChange }: {
+  value: SubscriberExperience;
+  onChange: (value: SubscriberExperience) => void;
+}) {
+  const [newSection, setNewSection] = useState({ title: '', content: '', placement: 'summary' as ExperiencePlacement, accent: '#0f766e' });
+  const [newButton, setNewButton] = useState({ label: '', content: '', helperText: '', duration: 8, placement: 'summary' as ExperiencePlacement, tone: 'emerald' as CustomQueryButton['tone'] });
+
+  const update = (patch: Partial<SubscriberExperience>) => onChange({ ...value, ...patch });
+  const updateSection = (id: string, patch: Partial<CustomQuerySection>) =>
+    update({ sections: value.sections.map(section => section.id === id ? { ...section, ...patch } : section) });
+  const updateButton = (id: string, patch: Partial<CustomQueryButton>) =>
+    update({ buttons: value.buttons.map(button => button.id === id ? { ...button, ...patch } : button) });
+
+  const addSection = () => {
+    if (!newSection.title.trim()) return;
+    update({ sections: [...value.sections, { ...newSection, id: uid(), visible: true }] });
+    setNewSection({ title: '', content: '', placement: 'summary', accent: '#0f766e' });
+    toast.success('تمت إضافة قسم مخصص');
+  };
+
+  const addButton = () => {
+    if (!newButton.label.trim()) return;
+    update({ buttons: [...value.buttons, { ...newButton, id: uid(), visible: true, duration: Math.max(1, Math.min(60, newButton.duration)) }] });
+    setNewButton({ label: '', content: '', helperText: '', duration: 8, placement: 'summary', tone: 'emerald' });
+    toast.success('تمت إضافة زر مخصص');
+  };
+
+  const fileToDataUrl = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => update({ companyLogo: String(reader.result || '') });
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <Card className="border-none shadow-sm ring-1 ring-slate-200 overflow-hidden">
+      <div className="h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500" />
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-base font-black text-slate-800 flex items-center gap-2">
+              <Building2 size={17} className="text-indigo-600" /> هوية وتجربة بوابة المشترك
+            </CardTitle>
+            <CardDescription className="text-xs mt-1">
+              خصص اسم الشركة، شعارها، الأقسام والأزرار التي تظهر داخل نتيجة الاستعلام. تحفظ الإعدادات محليًا في الواجهة.
+            </CardDescription>
+          </div>
+          <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200">Frontend</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-4 items-end">
+          <div>
+            <label className="text-xs font-bold text-slate-500 mb-1.5 block">اسم الشركة / المؤسسة</label>
+            <Input value={value.companyName} onChange={e => update({ companyName: e.target.value })} placeholder="مثال: شركة النخبة للاستثمار" className="h-10" />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-500 mb-1.5 block">عنوان البوابة</label>
+            <Input value={value.welcomeTitle} onChange={e => update({ welcomeTitle: e.target.value })} placeholder="بوابة الاستعلام المؤسسية" className="h-10" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 ring-1 ring-slate-200 overflow-hidden flex items-center justify-center">
+              {value.companyLogo ? <img src={value.companyLogo} alt="شعار الشركة" className="w-full h-full object-contain" /> : <Building2 size={18} className="text-slate-400" />}
+            </div>
+            <label className="h-10 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-600 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+              <Upload size={14} /> رفع الشعار
+              <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && fileToDataUrl(e.target.files[0])} />
+            </label>
+            {value.companyLogo && <button type="button" onClick={() => update({ companyLogo: '' })} className="p-2 text-slate-400 hover:text-red-500" title="حذف الشعار"><X size={15} /></button>}
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-slate-500 mb-1.5 block">النص الترحيبي</label>
+          <textarea value={value.welcomeText} onChange={e => update({ welcomeText: e.target.value })} rows={2} placeholder="النص الذي يظهر للمشترك داخل بوابة الاستعلام" className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200 resize-y" />
+        </div>
+
+        <div className="border-t border-slate-100 pt-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="text-sm font-black text-slate-800">الأقسام المخصصة</p>
+              <p className="text-xs text-slate-400">كل قسم اختياري ويمكن تحديد مكان ظهوره في الاستعلام.</p>
+            </div>
+            <Badge variant="outline">{value.sections.length} أقسام</Badge>
+          </div>
+          <div className="space-y-3">
+            {value.sections.map(section => (
+              <div key={section.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_auto] gap-2">
+                  <Input value={section.title} onChange={e => updateSection(section.id, { title: e.target.value })} placeholder="اسم القسم" className="h-9 bg-white text-sm" />
+                  <select value={section.placement} onChange={e => updateSection(section.id, { placement: e.target.value as ExperiencePlacement })} className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold">
+                    {Object.entries(PLACEMENT_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                  </select>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={section.accent} onChange={e => updateSection(section.id, { accent: e.target.value })} className="h-9 w-10 rounded-md border border-slate-200 bg-white p-1 cursor-pointer" title="لون القسم" />
+                    <button type="button" onClick={() => updateSection(section.id, { visible: !section.visible })} className={`h-9 px-2 rounded-md text-xs font-bold ${section.visible ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>{section.visible ? 'ظاهر' : 'مخفي'}</button>
+                    <button type="button" onClick={() => update({ sections: value.sections.filter(item => item.id !== section.id) })} className="p-2 text-slate-400 hover:text-red-500" title="حذف القسم"><Trash2 size={15} /></button>
+                  </div>
+                </div>
+                <textarea value={section.content} onChange={e => updateSection(section.id, { content: e.target.value })} rows={2} placeholder="محتوى القسم الذي سيظهر للمشترك..." className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-200 resize-y" />
+              </div>
+            ))}
+            <div className="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/40 p-3">
+              <p className="text-xs font-black text-indigo-700 mb-2">إضافة قسم جديد</p>
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_auto] gap-2">
+                <Input value={newSection.title} onChange={e => setNewSection({ ...newSection, title: e.target.value })} placeholder="اسم القسم الجديد" className="h-9 bg-white text-sm" />
+                <select value={newSection.placement} onChange={e => setNewSection({ ...newSection, placement: e.target.value as ExperiencePlacement })} className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold">
+                  {Object.entries(PLACEMENT_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+                <Button type="button" onClick={addSection} className="h-9 bg-indigo-600 hover:bg-indigo-700 gap-1.5"><Plus size={14} /> إضافة</Button>
+              </div>
+              <textarea value={newSection.content} onChange={e => setNewSection({ ...newSection, content: e.target.value })} rows={2} placeholder="محتوى القسم..." className="w-full mt-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs outline-none resize-y" />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-slate-100 pt-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="text-sm font-black text-slate-800">الأزرار التفاعلية</p>
+              <p className="text-xs text-slate-400">سمِّ الزر، حدّد مدة شريط التقدم، ومحتوى الرسالة بعد الضغط.</p>
+            </div>
+            <Badge variant="outline">{value.buttons.length} أزرار</Badge>
+          </div>
+          <div className="space-y-3">
+            {value.buttons.map(button => (
+              <div key={button.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_150px_100px_auto] gap-2">
+                  <Input value={button.label} onChange={e => updateButton(button.id, { label: e.target.value })} placeholder="تسمية الزر" className="h-9 bg-white text-sm" />
+                  <select value={button.placement} onChange={e => updateButton(button.id, { placement: e.target.value as ExperiencePlacement })} className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold">
+                    {Object.entries(PLACEMENT_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                  </select>
+                  <div className="relative"><Input type="number" min={1} max={60} value={button.duration} onChange={e => updateButton(button.id, { duration: Math.max(1, Math.min(60, Number(e.target.value) || 1)) })} className="h-9 bg-white pl-8 text-sm" /><span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">ث</span></div>
+                  <div className="flex items-center gap-2">
+                    <select value={button.tone} onChange={e => updateButton(button.id, { tone: e.target.value as CustomQueryButton['tone'] })} className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold">
+                      <option value="emerald">أخضر</option><option value="blue">أزرق</option><option value="amber">ذهبي</option><option value="violet">بنفسجي</option>
+                    </select>
+                    <button type="button" onClick={() => updateButton(button.id, { visible: !button.visible })} className={`h-9 px-2 rounded-md text-xs font-bold ${button.visible ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>{button.visible ? 'ظاهر' : 'مخفي'}</button>
+                    <button type="button" onClick={() => update({ buttons: value.buttons.filter(item => item.id !== button.id) })} className="p-2 text-slate-400 hover:text-red-500" title="حذف الزر"><Trash2 size={15} /></button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <Input value={button.helperText} onChange={e => updateButton(button.id, { helperText: e.target.value })} placeholder="وصف قصير يظهر تحت الزر" className="h-9 bg-white text-xs" />
+                  <Input value={button.content} onChange={e => updateButton(button.id, { content: e.target.value })} placeholder="النص الذي يظهر بعد الضغط" className="h-9 bg-white text-xs" />
+                </div>
+              </div>
+            ))}
+            <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-3">
+              <p className="text-xs font-black text-violet-700 mb-2">إضافة زر جديد</p>
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_150px_100px_auto] gap-2">
+                <Input value={newButton.label} onChange={e => setNewButton({ ...newButton, label: e.target.value })} placeholder="تسمية الزر" className="h-9 bg-white text-sm" />
+                <select value={newButton.placement} onChange={e => setNewButton({ ...newButton, placement: e.target.value as ExperiencePlacement })} className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold">
+                  {Object.entries(PLACEMENT_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+                <div className="relative"><Input type="number" min={1} max={60} value={newButton.duration} onChange={e => setNewButton({ ...newButton, duration: Number(e.target.value) || 1 })} className="h-9 bg-white pl-8 text-sm" /><span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">ث</span></div>
+                <Button type="button" onClick={addButton} className="h-9 bg-violet-600 hover:bg-violet-700 gap-1.5"><Plus size={14} /> إضافة</Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                <Input value={newButton.helperText} onChange={e => setNewButton({ ...newButton, helperText: e.target.value })} placeholder="وصف قصير للزر" className="h-9 bg-white text-xs" />
+                <Input value={newButton.content} onChange={e => setNewButton({ ...newButton, content: e.target.value })} placeholder="النص بعد الضغط" className="h-9 bg-white text-xs" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SubscriberQueryExperience({ experience, subscriberName }: { experience: SubscriberExperience; subscriberName: string }) {
+  const [progress, setProgress] = useState<Record<string, number>>({});
+  const [running, setRunning] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sections = experience.sections.filter(section => section.visible && section.title.trim());
+  const buttons = experience.buttons.filter(button => button.visible && button.label.trim());
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+
+  const startButton = (button: CustomQueryButton) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setRunning(button.id);
+    setProgress(prev => ({ ...prev, [button.id]: 0 }));
+    const step = 100 / Math.max(1, button.duration * 10);
+    timerRef.current = setInterval(() => {
+      setProgress(prev => {
+        const next = Math.min(100, (prev[button.id] || 0) + step);
+        if (next >= 100) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          setRunning(null);
+        }
+        return { ...prev, [button.id]: next };
+      });
+    }, 100);
+  };
+
+  const renderSections = (placement: ExperiencePlacement) => sections.filter(section => section.placement === placement).map(section => (
+    <div key={section.id} className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+      <div className="h-1" style={{ background: section.accent || '#0f766e' }} />
+      <div className="p-4">
+        <p className="text-sm font-black text-slate-800">{section.title}</p>
+        {section.content && <p className="text-sm text-slate-600 leading-7 whitespace-pre-line mt-2">{section.content}</p>}
+      </div>
+    </div>
+  ));
+
+  const renderButtons = (placement: ExperiencePlacement) => buttons.filter(button => button.placement === placement).map(button => {
+    const value = Math.round(progress[button.id] || 0);
+    const done = value >= 100;
+    return (
+      <div key={button.id} className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm">
+        <button type="button" onClick={() => startButton(button)} className={`w-full h-11 rounded-xl bg-gradient-to-l ${TONE_CLASSES[button.tone]} text-white font-black text-sm shadow-lg flex items-center justify-center gap-2 hover:brightness-105 transition-all`}>
+          {running === button.id ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
+          {button.label}
+        </button>
+        {button.helperText && <p className="text-[11px] text-slate-400 text-center mt-2">{button.helperText}</p>}
+        {value > 0 && !done && <div className="mt-2"><div className="h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-l from-amber-400 to-orange-500 transition-all" style={{ width: `${value}%` }} /></div><p className="text-[10px] text-slate-400 text-center mt-1">جارٍ تنفيذ الطلب… {value}%</p></div>}
+        {done && button.content && <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2 text-xs font-bold text-emerald-800 whitespace-pre-line">{button.content}</div>}
+      </div>
+    );
+  });
+
+  if (!experience.companyName && sections.length === 0 && buttons.length === 0) return null;
+  return (
+    <div className="space-y-4 mt-5">
+      <div className="rounded-2xl bg-gradient-to-l from-slate-900 via-slate-800 to-indigo-900 text-white p-5 shadow-xl">
+        <div className="flex items-center gap-3">
+          {experience.companyLogo ? <img src={experience.companyLogo} alt={experience.companyName} className="w-12 h-12 rounded-xl bg-white object-contain p-1" /> : <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center"><Building2 size={22} /></div>}
+          <div><p className="text-xs text-indigo-200 font-bold">{experience.companyName}</p><p className="text-lg font-black mt-0.5">{experience.welcomeTitle}</p></div>
+        </div>
+        {experience.welcomeText && <p className="text-sm text-slate-300 leading-7 mt-3 whitespace-pre-line">{experience.welcomeText.replace('{name}', subscriberName)}</p>}
+      </div>
+      {renderSections('top')}
+      {renderButtons('top')}
+      {renderSections('summary')}
+      {renderButtons('summary')}
+      {renderSections('bottom')}
+      {renderButtons('bottom')}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // Admin Panel
 // — نظام الإستعلام عن الأرباح
 // ─────────────────────────────────────────────────────────────
@@ -3330,6 +3635,9 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
               </CardContent>
             </Card>
             )}
+
+            {/* تجربة بوابة المشترك المخصصة */}
+            {found && <SubscriberQueryExperience experience={resolveSubscriberExperience(systemConfig.subscriberExperience)} subscriberName={found.name} />}
 
             {/* سحب الأرباح */}
             <div className="flex justify-center pt-2 pb-1">
@@ -3775,12 +4083,14 @@ function AddOperationsTab({ operations, onOperationsChange, subscriberNames, sec
 
 const SUBS_PER_PAGE = 10;
 
-function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, operations, onOperationsChange }: {
+function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, operations, onOperationsChange, systemConfig, onConfigChange }: {
   subscribers: Subscriber[];
   onSubscribersChange: (s: Subscriber[]) => void;
   sectionName: string;
   operations: Operation[];
   onOperationsChange: (o: Operation[]) => void;
+  systemConfig: SystemConfig;
+  onConfigChange: (partial: Partial<SystemConfig>) => void;
 }) {
   const [form, setForm] = useState<Omit<Subscriber, 'id'>>({ ...EMPTY_SUB });
   const [editId, setEditId] = useState<string | null>(null);
@@ -4097,6 +4407,7 @@ function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, opera
   };
 
   const f = form;
+  const subscriberExperience = resolveSubscriberExperience(systemConfig.subscriberExperience);
 
   return (
     <>
@@ -4116,6 +4427,11 @@ function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, opera
           )}
         </div>
       </div>
+
+      <SubscriberExperienceBuilder
+        value={subscriberExperience}
+        onChange={subscriberExperience => onConfigChange({ subscriberExperience })}
+      />
 
       {/* Form */}
       <Card className="border-none shadow-sm ring-1 ring-slate-200 overflow-hidden">
