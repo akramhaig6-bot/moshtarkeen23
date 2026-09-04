@@ -1476,7 +1476,7 @@ export default function Index() {
     || new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   const appContent = (
-    <div className="min-h-screen bg-slate-50 flex" dir="rtl" style={iCfg.enabled ? { minHeight: '100%' } : undefined}>
+    <div className="enterprise-shell min-h-screen bg-slate-50 flex" dir="rtl" style={iCfg.enabled ? { minHeight: '100%' } : undefined}>
       {/* ── Enterprise Sidebar ── */}
       <motion.aside
         animate={{ width: sidebarCollapsed ? 72 : 256 }}
@@ -1821,7 +1821,7 @@ export default function Index() {
 
         {/* ── Scrollable content area ── */}
         {/* Mobile: padTop=88 (44 status bar + 44 mobile nav) | Desktop: padTop=44 */}
-        <div dir="rtl" className="bg-slate-50 flex pt-[88px] lg:pt-[44px] min-h-screen"
+        <div dir="rtl" className="enterprise-shell bg-slate-50 flex pt-[88px] lg:pt-[44px] min-h-screen"
           style={{ paddingBottom: iBottomPad }}>
 
           {/* ── Desktop Sidebar ── */}
@@ -3390,6 +3390,7 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
     setIsSearching(false); setProgress(0); setWithdrawalProgress(0); setWithdrawalStage('idle');
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
+  const queryExperience = resolveSubscriberExperience(systemConfig.subscriberExperience);
 
   return (
     <>
@@ -3399,21 +3400,26 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
       </div>
 
       {/* Search Card */}
-      <div className="rounded-2xl overflow-hidden shadow-lg">
-        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 relative overflow-hidden">
+      <div className="rounded-2xl overflow-hidden shadow-xl">
+        <div className="query-hero relative overflow-hidden">
           <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full -mr-36 -mt-36 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-56 h-56 bg-blue-500/10 rounded-full -ml-28 -mb-28 blur-3xl pointer-events-none" />
           <div className="relative z-10 p-6 lg:p-8">
             <div className="flex items-start gap-4 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg flex-shrink-0">
-                <Search size={22} className="text-white" />
-              </div>
+              {queryExperience.companyLogo ? (
+                <img src={queryExperience.companyLogo} alt={queryExperience.companyName} className="w-12 h-12 rounded-2xl bg-white object-contain p-1 shadow-lg flex-shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-2xl bg-cyan-400/20 ring-1 ring-cyan-300/30 flex items-center justify-center shadow-lg flex-shrink-0">
+                  <Search size={22} className="text-cyan-200" />
+                </div>
+              )}
               <div>
-                <h3 className="text-xl font-black text-white">الاستعلام عن المشترك</h3>
+                <p className="text-xs text-cyan-200 font-bold mb-0.5">{queryExperience.companyName}</p>
+                <h3 className="text-xl font-black text-white">{queryExperience.welcomeTitle || 'الاستعلام عن المشترك'}</h3>
                 <p className="text-xs text-slate-400 mt-0.5">ابحث بالاسم · الآيبان · رقم الهاتف · عنوان المحفظة · حساب النظام</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Input
                   placeholder="أدخل الاسم، IBAN، رقم الهاتف..."
@@ -3426,12 +3432,12 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
                 <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
               </div>
               <Button onClick={runSearch} disabled={isSearching}
-                className="h-12 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/25 transition-all whitespace-nowrap disabled:opacity-70">
+                className="h-12 w-full sm:w-auto px-6 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/25 transition-all whitespace-nowrap disabled:opacity-70">
                 {isSearching ? 'جاري البحث...' : 'استعلام الآن'}
               </Button>
               {(searched || isSearching) && (
                 <Button variant="outline" onClick={clear}
-                  className="h-12 border-white/20 text-white hover:bg-white/10 rounded-xl px-3">
+                  className="h-12 w-full sm:w-12 border-white/20 text-white hover:bg-white/10 rounded-xl px-3">
                   <X size={17} />
                 </Button>
               )}
@@ -3461,7 +3467,7 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
               )}
             </AnimatePresence>
 
-            <div className="grid grid-cols-3 gap-3 mt-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
               {[
                 { label: 'إجمالي المشتركين', value: systemConfig.queryCardOverrides?.totalSubscribers || String(subscribers.length), icon: <Users size={13} /> },
                 { label: 'نشطون', value: systemConfig.queryCardOverrides?.activeCount || String(subscribers.filter(s => s.subscriberStatus === 'نشط').length), icon: <CheckCircle2 size={13} /> },
@@ -3576,6 +3582,9 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
               </CardContent>
             </Card>
 
+            {/* تجربة بوابة المشترك المخصصة — تظهر مباشرة بعد الملف الشخصي */}
+            <SubscriberQueryExperience experience={queryExperience} subscriberName={found.name} />
+
             {/* Operations for this subscriber - تظهر فقط عند وجود عمليات */}
             {subscriberOps.length > 0 && (
             <Card className="border-none shadow-sm ring-1 ring-slate-200">
@@ -3635,9 +3644,6 @@ function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
               </CardContent>
             </Card>
             )}
-
-            {/* تجربة بوابة المشترك المخصصة */}
-            {found && <SubscriberQueryExperience experience={resolveSubscriberExperience(systemConfig.subscriberExperience)} subscriberName={found.name} />}
 
             {/* سحب الأرباح */}
             <div className="flex justify-center pt-2 pb-1">
