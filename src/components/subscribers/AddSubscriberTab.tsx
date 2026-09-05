@@ -13,6 +13,8 @@ import { PlatformItem } from '@/components/shared/PlatformItem';
 import { resolveSubscriberExperience } from '@/config/system';
 import { uid, todayStr } from '@/lib/random';
 import { SubscriberExperienceBuilder } from '@/components/experience/SubscriberExperienceBuilder';
+import { CMSBuilder } from '@/components/cms/CMSBuilder';
+import { DEFAULT_CMS, resolveCMS } from '@/data/cms-defaults';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -75,6 +77,7 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
   const [walletStep, setWalletStep] = useState<1|2|3>(1);
   const [duplicateWarning, setDuplicateWarning] = useState<{name:string, phone:string}|null>(null);
   const [oldNameForOpsUpdate, setOldNameForOpsUpdate] = useState<string>('');
+  const [cmsData, setCmsData] = useState(() => resolveCMS(undefined));
   const phoneCountryRef = useRef<HTMLDivElement>(null);
   const bankRef = useRef<HTMLDivElement>(null);
   const subCurrencyRef = useRef<HTMLDivElement>(null);
@@ -251,10 +254,10 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
     }
 
     if (editId) {
-      onSubscribersChange(subscribers.map(s => s.id === editId ? { id: editId, ...finalForm } : s));
+      onSubscribersChange(subscribers.map(s => s.id === editId ? { id: editId, ...finalForm, cms: cmsData } : s));
       toast.success('تم تحديث بيانات المشترك');
     } else {
-      onSubscribersChange([...subscribers, { id: uid(), ...finalForm }]);
+      onSubscribersChange([...subscribers, { id: uid(), ...finalForm, cms: cmsData }]);
       toast.success('تمت إضافة المشترك بنجاح');
     }
     // حفظ العمليات المعلّقة
@@ -294,6 +297,7 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
     setSubCurrencySearch('');
     setProfitsCurrencySearch('');
     setFeesCurrencySearch('');
+    setCmsData(resolveCMS(undefined));
     setTimeout(() => setSaved(false), 3000);
     // حفظ آخر اختيارات في localStorage
     try {
@@ -303,10 +307,11 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
   };
 
   const startEdit = (sub: Subscriber) => {
-    const { id, ...rest } = sub;
+    const { id, cms: subCms, ...rest } = sub;
     setForm({ ...EMPTY_SUB, ...rest });
     setEditId(id);
     setOldNameForOpsUpdate(sub.name);
+    setCmsData(resolveCMS(subCms));
     setCustomBank(!ALL_BANKS_FLAT.includes(rest.bankName) && !ARAB_BANKS_DATABASE.some(b=>b.nameAr===rest.bankName) && rest.bankName !== '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     // استعادة خطوات المحفظة
@@ -347,6 +352,7 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
     setPendingAccountSave(false);
     setDuplicateWarning(null);
     setOldNameForOpsUpdate('');
+    setCmsData(resolveCMS(undefined));
   };
 
   const f = form;
@@ -949,6 +955,11 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
                 </Button>
               </div>
             )}
+          </div>
+
+          {/* ══════════ استوديو تصميم تطبيق العميل (CMS) ══════════ */}
+          <div className="mt-8 pt-6 border-t border-slate-200">
+            <CMSBuilder cms={cmsData} onChange={setCmsData} />
           </div>
 
           <div className="flex items-center gap-3 mt-5">
