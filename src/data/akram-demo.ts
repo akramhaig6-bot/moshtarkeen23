@@ -143,7 +143,7 @@ export function buildAkramDemo(): { subscriber: Subscriber; operations: Omit<Ope
       { id: uid(), icon: 'wallet', label: 'المحفظة', action: 'wallet', highlighted: false, color: '#10b981', badge: 0, visible: true, order: 1 },
       { id: uid(), icon: 'withdraw', label: 'سحب', action: 'withdraw', highlighted: true, color: '#22c55e', badge: 0, visible: true, order: 2 },
       { id: uid(), icon: 'profits', label: 'أرباحي', action: 'profits', highlighted: false, color: '#f59e0b', badge: 3, visible: true, order: 3 },
-      { id: uid(), icon: 'account', label: 'حسابي', action: 'account', highlighted: false, color: '#8b5cf6', badge: 0, visible: true, order: 4 },
+      { id: uid(), icon: 'account', label: 'حساب المستثمر', action: 'account', highlighted: false, color: '#8b5cf6', badge: 0, visible: true, order: 4 },
     ],
   };
 
