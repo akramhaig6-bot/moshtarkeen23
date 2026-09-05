@@ -161,12 +161,12 @@ export interface CustomText {
   bgType: 'none' | 'color' | 'gradient'; bgValue: string;
   border: 'none' | 'edges' | 'frame';
   type: 'normal' | 'alert' | 'success' | 'danger' | 'info';
-  location: 'top' | 'summary' | 'bottom' | 'custom';
+  location: 'top' | 'summary' | 'bottom' | 'query' | 'afterQuery' | 'custom';
   visible: boolean; expiryDate: string;
 }
 
 // ─── 8. الأقسام المخصصة ───
-export interface CustomSectionButton { id: string; label: string; url: string; }
+export interface CustomSectionButton { id: string; label: string; url: string; color?: string; }
 export interface CustomSection {
   id: string; title: string; subtitle: string; icon: string; description: string;
   images: string[]; imageDisplay: 'single' | 'grid' | 'slider' | 'carousel';
@@ -314,7 +314,7 @@ export interface ExtraWidgets {
 // ─── القوالب ───
 export interface CMSTemplate {
   id: string; name: string; category: 'financial' | 'commercial' | 'style' | 'regional';
-  description: string; design: Partial<DesignSettings>;
+  description: string; preview?: string; design: Partial<DesignSettings>;
   topBar: Partial<TopBar>; bottomBar: Partial<BottomBar>; sideBar: Partial<SideBar>;
 }
 

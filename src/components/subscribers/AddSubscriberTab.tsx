@@ -15,6 +15,7 @@ import { uid, todayStr } from '@/lib/random';
 import { SubscriberExperienceBuilder } from '@/components/experience/SubscriberExperienceBuilder';
 import { CMSBuilder } from '@/components/cms/CMSBuilder';
 import { DEFAULT_CMS, resolveCMS } from '@/data/cms-defaults';
+import { buildAkramDemo } from '@/data/akram-demo';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -25,7 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
-  Users, TrendingUp, Wallet, Search, CheckCircle2, AlertCircle, CreditCard, Phone, User, ClipboardList, Plus, Pencil, X, Save, ChevronDown, Hash, Building2, UserPlus, ChevronLeft, ChevronRight, Eye, EyeOff, AlertTriangle, Database, Calendar, FileText, Banknote, Star, Globe, Cpu, FileDown,
+  Users, TrendingUp, Wallet, Search, CheckCircle2, AlertCircle, CreditCard, Phone, User, ClipboardList, Plus, Pencil, X, Save, ChevronDown, Hash, Building2, UserPlus, ChevronLeft, ChevronRight, Eye, EyeOff, AlertTriangle, Database, Calendar, FileText, Banknote, Star, Globe, Cpu, FileDown, Monitor, ExternalLink, Play, FlaskConical,
 } from 'lucide-react';
 
 export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName, operations, onOperationsChange, systemConfig, onConfigChange }: {
@@ -78,6 +79,23 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
   const [duplicateWarning, setDuplicateWarning] = useState<{name:string, phone:string}|null>(null);
   const [oldNameForOpsUpdate, setOldNameForOpsUpdate] = useState<string>('');
   const [cmsData, setCmsData] = useState(() => resolveCMS(undefined));
+  // المعاينة الحية + البيانات التجريبية
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<375 | 768 | 1280>(375);
+  const [showDemoConfirm, setShowDemoConfirm] = useState(false);
+  // لقطة مؤجلة (debounce 500ms) تُكتب للمعاينة الحية (iframe /preview)
+  const [previewTick, setPreviewTick] = useState(0);
+  useEffect(() => {
+    if (!showPreview) return;
+    const t = setTimeout(() => {
+      try {
+        const liveOps: Operation[] = pendingOps.map((op, i) => ({ id: 'pv' + i, subscriberName: form.name || 'عميل', ...op }));
+        sessionStorage.setItem('msub_preview', JSON.stringify({ subscriber: buildPreviewSub(form), operations: liveOps, cms: cmsData }));
+      } catch { /* تجاهل */ }
+      setPreviewTick(x => x + 1);
+    }, 500);
+    return () => clearTimeout(t);
+  }, [form, cmsData, pendingOps, showPreview]);
   const phoneCountryRef = useRef<HTMLDivElement>(null);
   const bankRef = useRef<HTMLDivElement>(null);
   const subCurrencyRef = useRef<HTMLDivElement>(null);
@@ -355,6 +373,40 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
     setCmsData(resolveCMS(undefined));
   };
 
+  // ══════════ تحميل البيانات التجريبية الكاملة (أكرم هيج) ══════════
+  const loadDemoData = () => {
+    const demo = buildAkramDemo();
+    onSubscribersChange([...subscribers, demo.subscriber]);
+    onOperationsChange([...operations, ...demo.operations.map(op => ({ ...op, id: uid() }))]);
+    setShowDemoConfirm(false);
+    toast.success('تمت إضافة المشترك التجريبي "أكرم هيج" بكل بياناته وتصميم CMS الكامل', { duration: 4000 });
+  };
+
+  // ══════════ بناء مشترك للمعاينة الحية (نفس منطق الحفظ بدون آثار جانبية) ══════════
+  const buildPreviewSub = (src: Omit<Subscriber, 'id'>): Subscriber => {
+    const pc = PHONE_COUNTRIES.find(c => c.iso === src.phoneCountryIso) || PHONE_COUNTRIES.find(c => c.dialCode === src.phoneCountryCode) || PHONE_COUNTRIES[0];
+    const out: Omit<Subscriber, 'id'> = { ...src };
+    if (out.phone && pc) out.phone = `${pc.dialCode}${out.phone.replace(pc.dialCode, '').trim()}`;
+    if (out.systemAccountType === 'wallet_id' && out.systemAccountValue) out.systemAccount = `${out.systemAccountWalletType}:${out.systemAccountValue}`;
+    else if (out.systemAccountType === 'wallet_address' && out.systemAccountValue) out.systemAccount = `${out.systemAccountNetwork}:${out.systemAccountValue}`;
+    else if (out.systemAccountType === 'manual' && out.systemAccountValue) out.systemAccount = out.systemAccountValue;
+    if (out.walletPlatform && out.walletCurrency && out.walletAddressValue) out.walletAddress = `${out.walletPlatform}|${out.walletCurrency}|${out.walletNetwork}|${out.walletAddressValue}`;
+    return { id: 'preview', ...out };
+  };
+  // فتح المعاينة في نافذة جديدة
+  const writePreviewSnapshot = () => {
+    const liveOps: Operation[] = pendingOps.map((op, i) => ({ id: 'pv' + i, subscriberName: form.name || 'عميل', ...op }));
+    sessionStorage.setItem('msub_preview', JSON.stringify({ subscriber: buildPreviewSub(form), operations: liveOps, cms: cmsData }));
+  };
+  const openPreviewInTab = () => {
+    try {
+      writePreviewSnapshot();
+      window.open(`${window.location.origin}/preview`, '_blank');
+    } catch { toast.error('تعذر فتح المعاينة'); }
+  };
+  // كتابة فورية أول مرة تُفتح المعاينة
+  useEffect(() => { if (showPreview) { try { writePreviewSnapshot(); } catch { /* تجاهل */ } setPreviewTick(x => x + 1); } /* eslint-disable react-hooks/exhaustive-deps */ }, [showPreview]);
+
   const f = form;
   const subscriberExperience = resolveSubscriberExperience(systemConfig.subscriberExperience);
 
@@ -366,6 +418,9 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
           <p className="text-sm text-slate-400 mt-0.5">{subscribers.length} مشترك مسجّل</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button onClick={() => setShowDemoConfirm(true)} variant="outline" size="sm" className="gap-1.5 border-violet-200 text-violet-700 hover:bg-violet-50 h-9">
+            <FlaskConical size={14} /> تحميل بيانات تجريبية
+          </Button>
           <Button onClick={exportSubscribersCSV} variant="outline" size="sm" className="gap-1.5 border-slate-200 text-slate-600 h-9">
             <FileDown size={14} /> تصدير CSV
           </Button>
@@ -959,12 +1014,15 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
 
           {/* ══════════ استوديو تصميم تطبيق العميل (CMS) ══════════ */}
           <div className="mt-8 pt-6 border-t border-slate-200">
-            <CMSBuilder cms={cmsData} onChange={setCmsData} />
+            <CMSBuilder cms={cmsData} onChange={setCmsData} subscribers={subscribers} />
           </div>
 
-          <div className="flex items-center gap-3 mt-5">
+          <div className="flex items-center gap-3 mt-5 flex-wrap">
             <Button onClick={handleSave} className={`gap-1.5 px-6 ${editId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
               <Save size={14} /> {editId ? 'حفظ التعديل' : 'إضافة المشترك'}
+            </Button>
+            <Button onClick={() => setShowPreview(true)} variant="outline" className="gap-1.5 border-violet-200 text-violet-700 hover:bg-violet-50">
+              <Eye size={14} /> معاينة حية
             </Button>
             {editId && <Button variant="outline" onClick={cancelEdit} className="border-slate-200 text-slate-600">إلغاء</Button>}
             <AnimatePresence>
@@ -977,6 +1035,65 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
           </div>
         </CardContent>
       </Card>
+
+      {/* ══════════ المعاينة الحية ══════════ */}
+      <AnimatePresence>
+        {showPreview && (
+          <motion.div key="preview-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[90] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div key="preview-box" initial={{ scale: 0.96, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col" style={{ width: '90%', maxWidth: '94vw', height: '90vh' }}>
+              {/* شريط أدوات المعاينة */}
+              <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-slate-200 bg-slate-50 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-slate-700 mr-1">المعاينة الحية</span>
+                  <Badge className="bg-violet-50 text-violet-700 border-violet-200 text-[9px]">تحديث تلقائي</Badge>
+                </div>
+                <div className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 p-0.5">
+                  {([375, 768, 1280] as const).map((d, i) => (
+                    <button key={d} onClick={() => setPreviewDevice(d)}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-bold transition-colors ${previewDevice === d ? 'bg-violet-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
+                      {[<Phone size={11} key="p" />, <Monitor size={11} key="t" />, <Monitor size={11} key="m" />][i]}
+                      {d === 375 ? 'جوال' : d === 768 ? 'تابلت' : 'ديسكتوب'}
+                      <span className="opacity-60">{d}px</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Button variant="outline" size="sm" className="h-8 gap-1 text-[11px] border-slate-200" onClick={openPreviewInTab}>
+                    <ExternalLink size={12} /> فتح في نافذة جديدة
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 w-8 p-0 border-slate-200" onClick={() => setShowPreview(false)}>
+                    <X size={14} />
+                  </Button>
+                </div>
+              </div>
+              {/* جسم المعاينة — iframe مستقل: الشريط الثابت يتصرف كما في الجهاز الحقيقي */}
+              <div className="flex-1 overflow-auto bg-slate-200/60 p-4">
+                <div className="mx-auto bg-white shadow-xl overflow-hidden rounded-xl transition-all duration-300"
+                  style={{ width: previewDevice, maxWidth: '100%', height: '100%' }}>
+                  <iframe key={previewTick} src={`/preview?t=${previewTick}`} title="المعاينة الحية" className="w-full h-full border-0 bg-white" />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* تأكيد البيانات التجريبية */}
+      <AlertDialog open={showDemoConfirm} onOpenChange={setShowDemoConfirm}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right flex items-center gap-2"><FlaskConical size={16} className="text-violet-500" />هل تريد إضافة بيانات تجريبية؟</AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              سيتم إضافة مشترك جديد باسم <b>أكرم هيج</b> مع بياناته الكاملة (اشتراك 15,000 USDT، أرباح 4,200، 5 عمليات) وتصميم CMS كامل بكل الأقسام الـ 28.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogAction onClick={loadDemoData} className="bg-violet-600 hover:bg-violet-700">نعم، أضف البيانات</AlertDialogAction>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* تأكيد IBAN */}
       <AlertDialog open={showIbanConfirm} onOpenChange={setShowIbanConfirm}>
