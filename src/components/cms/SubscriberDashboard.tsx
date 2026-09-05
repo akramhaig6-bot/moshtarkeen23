@@ -4,9 +4,9 @@
 // + تنقل بين الأقسام (views) + Bottom Bar + Widgets + تصدير
 // ═══════════════════════════════════════════════════════════════
 import { Subscriber, Operation } from '@/types';
-import { SubscriberCMS, CalendarEvent } from '@/types/cms';
-import { resolveCMS } from '@/data/cms-defaults';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { SubscriberCMS, CalendarEvent, DesignColors, CustomText, CustomSection, CustomAlert, Countdown } from '@/types/cms';
+import { resolveCMS, WALLET_SECTION_TITLE } from '@/data/cms-defaults';
+import { useState, useEffect, useRef, useMemo, createContext, useContext } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
@@ -21,7 +21,7 @@ const Ic = ({ n, s = 16, c }: { n: string; s?: number; c?: string }) => { const 
 
 // ═══ الاستعلامات (views) ═══
 const NAV_VIEWS = ['home', 'wallet', 'profits', 'operations', 'withdraw', 'account', 'settings'];
-const VIEW_TITLES: Record<string, string> = { home: 'الرئيسية', wallet: 'محفظتي', profits: 'أرباحي', operations: 'العمليات', withdraw: 'السحب', account: 'حسابي', settings: 'الإعدادات', docs: 'المستندات', extras: 'العروض الجديدة' };
+const VIEW_TITLES: Record<string, string> = { home: 'الرئيسية', wallet: WALLET_SECTION_TITLE, profits: 'أرباحي', operations: 'العمليات', withdraw: 'السحب', account: 'حسابي', settings: 'الإعدادات', docs: 'المستندات', extras: 'العروض الجديدة' };
 
 // ═══ استبدال المتغيرات ═══
 function rv(text: string, sub: Subscriber, ops: Operation[]): string {
@@ -105,9 +105,196 @@ function printDoc(title: string, bodyHtml: string) {
   w.document.close();
 }
 
+// ═══ طبقة التصميم (Skin) ═══
+// سبب الاهتزاز/الرفة في البطاقات (المحفظة خصوصاً): كانت هذه المكوّنات تُعرَّف داخل
+// جسم المكوّن الأم، فكل إعادة رسم كانت تُنتج «نوع مكوّن» جديد بالكامل، ويرى React أنه
+// مكوّن مختلف → يحذف الشجرة ويعيد تركيبها. إعادة التركيب تُشغّل حركة الظهور
+// (opacity 0→1 / y 20→0) من الصفر، ومع نبضة الساعة كل ثانية كانت البطاقات والعناوين
+// ترتجف ولا تستقر أبداً. النقل إلى مستوى الوحدة + تمرير التصميم عبر Context يثبّت الهوية.
+type EntryAnim = {
+  initial?: { opacity?: number; y?: number };
+  animate?: { opacity?: number; y?: number };
+  transition?: { duration?: number; delay?: number };
+};
+type DashSkin = {
+  C: DesignColors;
+  rd: string;
+  cShadow: string;
+  cBorder: React.CSSProperties;
+  hoverCls: string;
+  glass: boolean;
+  anim: EntryAnim;
+  gap: string;
+  gridCls: string;
+  sub: Subscriber;
+  ops: Operation[];
+  setView: (v: string) => void;
+  setLightbox: (src: string | null) => void;
+  closeAlert: (id: string) => void;
+};
+const SkinCtx = createContext<DashSkin | null>(null);
+const useSkin = (): DashSkin => useContext(SkinCtx) as DashSkin;
+
+// نبضة زمنية معزولة داخل المكوّن الصغير وحده (ساعة حية / عد تنازلي)
+// حتى لا تُعاد قراءة الداشبورد بالكامل كل ثانية.
+function useSecondsTick(intervalMs = 1000): Date {
+  const [t, setT] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setT(new Date()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return t;
+}
+
+// ═══ بطاقة عامة (مع Stagger delay اختياري) ═══
+const Card = ({ children, className = '', style = {}, noAnim = false, delay = 0 }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; noAnim?: boolean; delay?: number }) => {
+  const { C, rd, cShadow, cBorder, hoverCls, glass, anim } = useSkin();
+  const el = (
+    <div className={`${rd} ${cShadow} ${hoverCls} p-4 transition-all duration-300 ${className}`}
+      style={{ backgroundColor: glass ? C.bgCards + 'b3' : C.bgCards, ...cBorder, ...style }}>
+      {children}
+    </div>
+  );
+  if (noAnim) return el;
+  return <motion.div initial={anim.initial} animate={anim.animate} transition={delay ? { ...(anim.transition || {}), delay } : anim.transition}>{el}</motion.div>;
+};
+
+// غلاف العرض الفرعي: عنوان + زر رجوع
+const SubView = ({ title, children }: { title: string; children: React.ReactNode }) => {
+  const { C, anim, setView } = useSkin();
+  return (
+    <>
+      <motion.div initial={anim.initial} animate={anim.animate} transition={anim.transition} className="flex items-center justify-between mb-5">
+        <h2 className="text-xl font-black" style={{ color: C.textMain }}>{title}</h2>
+        <button onClick={() => setView('home')} className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-opacity hover:opacity-80" style={{ backgroundColor: C.primary + '15', color: C.primary }}>
+          <ChevronRight size={13} /> رجوع للرئيسية
+        </button>
+      </motion.div>
+      {children}
+    </>
+  );
+};
+
+// نص مخصص متكرر
+const CustomTextCard = ({ t }: { t: CustomText }) => {
+  const { C, rd, anim, sub, ops } = useSkin();
+  return (
+    <motion.div key={t.id} initial={anim.initial} animate={anim.animate} transition={anim.transition} className={`${rd} p-3 mb-4 ${t.border === 'frame' ? 'border-2' : t.border === 'edges' ? 'border-t-2 border-b-2' : ''} flex items-start gap-2`}
+      style={{ backgroundColor: t.bgType === 'color' ? t.bgValue : C.bgCards, borderColor: t.bgType === 'color' && t.bgValue ? t.bgValue : C.primary, textAlign: (t.align as any) || 'right' }}>
+      {t.icon && t.icon !== 'star' && <span className="mt-0.5"><Ic n={t.icon} s={15} c={t.color || C.primary} /></span>}
+      <div className="flex-1">
+        {t.title && <p className={`font-bold mb-1 ${t.size === 'small' ? 'text-xs' : t.size === 'large' ? 'text-base' : 'text-sm'}`} style={{ color: t.color || C.textMain }}>{t.title}</p>}
+        <p className={`${t.size === 'small' ? 'text-xs' : t.size === 'large' ? 'text-base' : 'text-sm'}`} style={{ color: t.color || C.textSecondary }}>{rv(t.content, sub, ops)}</p>
+      </div>
+    </motion.div>
+  );
+};
+
+// تنبيه ملوّن
+const AlertCard = ({ a }: { a: CustomAlert }) => {
+  const { rd, anim, closeAlert } = useSkin();
+  const ac: Record<string, { bg: string; tx: string; bd: string }> = { info: { bg: '#eff6ff', tx: '#1e40af', bd: '#bfdbfe' }, success: { bg: '#f0fdf4', tx: '#166534', bd: '#bbf7d0' }, warning: { bg: '#fffbeb', tx: '#92400e', bd: '#fde68a' }, danger: { bg: '#fef2f2', tx: '#991b1b', bd: '#fecaca' } };
+  const c = ac[a.type] || ac.info;
+  return (
+    <motion.div initial={anim.initial} animate={anim.animate} transition={anim.transition} className={`${rd} p-3 mb-4 flex items-center gap-2`} style={{ backgroundColor: c.bg, border: `1px solid ${c.bd}` }}>
+      <AlertCircle size={16} style={{ color: c.tx }} />
+      <p className="text-sm flex-1" style={{ color: c.tx }}>{a.text}</p>
+      {a.closable && <button onClick={() => closeAlert(a.id)} className="p-1 rounded-full hover:bg-black/10"><X size={12} /></button>}
+    </motion.div>
+  );
+};
+
+// بطاقة قسم مخصص (تُستخدم في الرئيسية والصفحات المستقلة)
+const SectionCard = ({ sec }: { sec: CustomSection }) => {
+  const { C, rd, setLightbox } = useSkin();
+  const [open, setOpen] = useState(sec.defaultState !== 'closed');
+  const body = (
+    <>
+      {sec.description && <p className="text-sm mb-3" style={{ color: C.textSecondary, lineHeight: '1.8' }}>{sec.description}</p>}
+      {sec.images.length > 0 && <div className={`${sec.imageDisplay === 'grid' ? 'grid grid-cols-2 gap-2' : sec.imageDisplay === 'single' ? '' : 'flex gap-2 overflow-x-auto pb-2 snap-x'}`}>
+        {sec.images.map((img, i) => (
+          <img key={i} src={img} alt={`${sec.title} ${i + 1}`} onClick={() => setLightbox(img)} className={`${sec.imageSize === 'small' ? 'w-20 h-20' : sec.imageSize === 'medium' ? 'w-40 h-40' : sec.imageSize === 'large' ? 'w-full h-56' : 'w-full h-72'} ${sec.imageDisplay === 'single' || sec.imageSize === 'large' || sec.imageSize === 'fullscreen' ? 'w-full' : ''} ${rd} object-cover flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity ${sec.imageDisplay === 'carousel' || sec.imageDisplay === 'slider' ? 'snap-center' : ''}`} />
+        ))}
+      </div>}
+      {sec.videoUrl && <div className="mt-3 aspect-video rounded-lg overflow-hidden"><iframe src={sec.videoUrl.replace('watch?v=', 'embed/')} className="w-full h-full" allowFullScreen title={sec.title} /></div>}
+      {sec.buttons.length > 0 && <div className="flex flex-wrap gap-2 mt-3">{sec.buttons.map(btn => <a key={btn.id} href={btn.url || '#'} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-lg text-xs font-bold text-white flex items-center gap-1.5 hover:opacity-90" style={{ backgroundColor: btn.color || C.primary }}>{btn.label} <ExternalLink size={11} /></a>)}</div>}
+    </>
+  );
+  if (sec.collapsible) {
+    return (
+      <Card key={sec.id} className={`mb-4 ${sec.style === 'frame' ? 'border-2' : ''}`} style={{ backgroundColor: sec.bgColor || C.bgCards, borderColor: sec.style === 'frame' ? C.borders : undefined }}>
+        <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-2">
+          <Ic n={sec.icon} s={16} c={C.primary} />
+          <h3 className="font-bold text-sm flex-1 text-right" style={{ color: C.textMain }}>{sec.title}</h3>
+          {sec.subtitle && <span className="text-xs" style={{ color: C.textSecondary }}>{sec.subtitle}</span>}
+          <ChevronLeft size={14} className={`transition-transform ${open ? '-rotate-90' : ''}`} style={{ color: C.textSecondary }} />
+        </button>
+        {open && <div className="mt-3">{body}</div>}
+      </Card>
+    );
+  }
+  return (
+    <Card key={sec.id} className={`mb-4 ${sec.style === 'frame' ? 'border-2' : ''}`} style={{ backgroundColor: sec.bgColor || C.bgCards, borderColor: sec.style === 'frame' ? C.borders : undefined }}>
+      <div className="flex items-center gap-2 mb-2"><Ic n={sec.icon} s={16} c={C.primary} /><h3 className="font-bold text-sm" style={{ color: C.textMain }}>{sec.title}</h3>{sec.subtitle && <span className="text-xs" style={{ color: C.textSecondary }}>{sec.subtitle}</span>}</div>
+      {body}
+    </Card>
+  );
+};
+
+// ═══ أدوات الوقت: تنبض داخلياً فقط ═══
+const LiveClockTile = () => {
+  const { C } = useSkin();
+  const now = useSecondsTick(1000);
+  return (
+    <div className="text-center p-2 rounded-lg" style={{ backgroundColor: C.bgMain }}>
+      <p className="text-lg font-bold tabular-nums" style={{ color: C.primary }}>{now.toLocaleTimeString('ar-SA')}</p>
+      <p className="text-[10px]" style={{ color: C.textSecondary }}>الوقت الآن</p>
+    </div>
+  );
+};
+
+const HijriDateTile = () => {
+  const { C } = useSkin();
+  const now = useSecondsTick(60000);
+  return (
+    <div className="text-center p-2 rounded-lg" style={{ backgroundColor: C.bgMain }}>
+      <p className="text-[11px] font-bold leading-5" style={{ color: C.primary }}>{now.toLocaleDateString('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+      <p className="text-[10px]" style={{ color: C.textSecondary }}>التاريخ الهجري</p>
+    </div>
+  );
+};
+
+// بطاقات العد التنازلي — النبضة الثانية داخلها فقط، فلا تهتز بقية البطاقات
+const CountdownCards = ({ items, variant = 'full' }: { items: Countdown[]; variant?: 'full' | 'compact' }) => {
+  const { C, gap } = useSkin();
+  const now = useSecondsTick(1000);
+  const list = items.filter(c => c.visible && c.targetDate).sort((a, b) => (a.order || 0) - (b.order || 0));
+  if (list.length === 0) return null;
+  if (variant === 'compact') {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {list.map(cd => {
+          const target = new Date(cd.targetDate + (cd.targetTime ? 'T' + cd.targetTime : '')); const diff = Math.max(0, target.getTime() - now.getTime());
+          const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000);
+          return <Card key={cd.id} className="text-center"><p className="text-xs font-bold mb-1" style={{ color: cd.color }}>{cd.title}</p><p className="text-2xl font-black tabular-nums" style={{ color: cd.color }}>{d} <span className="text-xs">يوم</span> {h} <span className="text-xs">ساعة</span></p></Card>;
+        })}
+      </div>
+    );
+  }
+  return (
+    <div className={`grid ${gap} mb-6 ${list.length > 1 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+      {list.map(cd => {
+        const target = new Date(cd.targetDate + (cd.targetTime ? 'T' + cd.targetTime : '')); const diff = Math.max(0, target.getTime() - now.getTime());
+        const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+        return <Card key={cd.id} className="text-center"><p className="text-xs font-bold mb-2" style={{ color: cd.color }}>{cd.title}</p><div className="flex justify-center gap-2">{[{ v: d, l: 'يوم' }, { v: h, l: 'ساعة' }, { v: m, l: 'دقيقة' }, { v: s, l: 'ثانية' }].map((t, i) => <div key={i} className="px-3 py-2 rounded-lg" style={{ backgroundColor: cd.color + '15' }}><p className="text-lg font-black tabular-nums" style={{ color: cd.color }}>{t.v}</p><p className="text-[9px]" style={{ color: C.textSecondary }}>{t.l}</p></div>)}</div></Card>;
+      })}
+    </div>
+  );
+};
+
 // ═══ المكوّن الرئيسي ═══
 export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: { subscriber: Subscriber; operations: Operation[]; cms: SubscriberCMS }) {
-  const R = resolveCMS(cms);
+  const R = useMemo(() => resolveCMS(cms), [cms]);
   const [sbOpen, setSbOpen] = useState(R.sideBar.defaultState === 'open');
   const [dark, setDark] = useState(false);
   const [view, setView] = useState('home');
@@ -129,11 +316,13 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
   const C = dark && R.design.darkMode.enabled ? R.design.darkMode.colors : R.design.colors;
-  const sOps = ops.filter(o => o.subscriberName === sub.name);
+  const sOps = useMemo(() => ops.filter(o => o.subscriberName === sub.name), [ops, sub.name]);
   const isSubView = view !== 'home';
 
-  // ساعة حية
-  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
+  // إعادة فحص نافذة التاريخ (نصوص/أقسام/بانرات مرتبطة بتاريخ) — كل دقيقة مرة.
+  // الساعة الحية والعد التنازلي انتقلا لمكوّناتهما الخاصة (LiveClockTile / CountdownCards)
+  // حتى لا تُعاد قراءة الداشبورد بالكامل كل ثانية فتُعاد حركات الظهور من الصفر.
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(t); }, []);
   // وضع داكن تلقائي
   useEffect(() => { if (R.design.darkMode.autoSwitch) { const h = new Date().getHours(); setDark(h >= 18 || h < 6); } }, [R.design.darkMode.autoSwitch]);
   // تحميل خطوط جوجل
@@ -152,10 +341,13 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
   const gap = R.design.spacing === 'tight' ? 'gap-2' : R.design.spacing === 'wide' ? 'gap-6' : 'gap-4';
   const rd = R.design.corners === 'sharp' ? 'rounded-none' : R.design.corners === 'very-rounded' ? 'rounded-2xl' : 'rounded-xl';
   const cShadow = R.design.cardStyle === 'shadow' ? 'shadow-md' : R.design.cardStyle === 'glass' ? 'backdrop-blur-xl shadow-lg' : R.design.cardStyle === 'neumorphism' ? 'shadow-[5px_5px_10px_rgba(0,0,0,0.08),-5px_-5px_10px_rgba(255,255,255,0.9)]' : R.design.cardStyle === 'border' ? 'border' : '';
-  const cBorder = R.design.cardStyle === 'border' ? { border: `1px solid ${C.borders}` } : R.design.cardStyle === 'glass' ? { border: '1px solid rgba(255,255,255,0.2)' } : {};
+  const cBorder = useMemo<React.CSSProperties>(() => R.design.cardStyle === 'border' ? { border: `1px solid ${C.borders}` } : R.design.cardStyle === 'glass' ? { border: '1px solid rgba(255,255,255,0.2)' } : {}, [R.design.cardStyle, C.borders]);
   const hoverCls = R.design.hoverEffect === 'zoom' ? 'hover:scale-[1.02]' : R.design.hoverEffect === 'lift' ? 'hover:-translate-y-1 hover:shadow-lg' : R.design.hoverEffect === 'glow' ? 'hover:shadow-xl hover:shadow-blue-500/10' : '';
-  // حركات الظهور حسب الإعدادات (fade/slide/bounce/none)
-  const anim = R.design.animation === 'none' ? {} : { initial: { opacity: 0, y: R.design.animation === 'slide' ? 20 : R.design.animation === 'bounce' ? -10 : 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4 } };
+  // حركات الظهور حسب الإعدادات (fade/slide/bounce/none) — كائن ثابت الهوية
+  const anim: EntryAnim = useMemo(() => R.design.animation === 'none'
+    ? {}
+    : { initial: { opacity: 0, y: R.design.animation === 'slide' ? 20 : R.design.animation === 'bounce' ? -10 : 0 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.4 } }, [R.design.animation]);
+
   const fSize = R.design.fonts.baseSize === 'small' ? 'text-sm' : R.design.fonts.baseSize === 'large' ? 'text-lg' : 'text-base';
   const fWeight = R.design.fonts.weight === 'bold' ? 'font-bold' : R.design.fonts.weight === 'medium' ? 'font-medium' : 'font-normal';
   const fLine = R.design.fonts.lineHeight === 'tight' ? 'leading-tight' : R.design.fonts.lineHeight === 'wide' ? 'leading-loose' : 'leading-normal';
@@ -169,6 +361,15 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
   const curSym = (sym?: string, code?: string) => sym || code || 'ر.س';
   const netBalance = sub.subscriptionAmount + sub.profits - sub.systemFees;
 
+  // طبقة التصميم المشتركة بين المكوّنات المثبتة في أعلى الملف
+  const skin: DashSkin = useMemo(() => ({
+    C, rd, cShadow, cBorder, hoverCls, anim, gap, gridCls,
+    glass: R.design.cardStyle === 'glass',
+    sub, ops: sOps,
+    setView, setLightbox,
+    closeAlert: (id: string) => setClosedAlerts(prev => new Set(prev).add(id)),
+  }), [C, rd, cShadow, cBorder, hoverCls, anim, gap, gridCls, R.design.cardStyle, sub, sOps]);
+
   // خلفيات
   const bgStyle = (): React.CSSProperties => {
     const bg = R.design.background;
@@ -178,39 +379,15 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
     return { backgroundColor: C.bgMain };
   };
 
-  // ═══ بطاقة عامة (مع Stagger delay اختياري) ═══
-  const Card = ({ children, className = '', style = {}, noAnim = false, delay = 0 }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; noAnim?: boolean; delay?: number }) => {
-    const el = (
-      <div className={`${rd} ${cShadow} ${hoverCls} p-4 transition-all duration-300 ${className}`}
-        style={{ backgroundColor: R.design.cardStyle === 'glass' ? C.bgCards + 'b3' : C.bgCards, ...cBorder, ...style }}>
-        {children}
-      </div>
-    );
-    if (noAnim) return el;
-    return <motion.div {...anim} transition={delay ? { ...(anim as any).transition, delay } : (anim as any).transition}>{el}</motion.div>;
-  };
-
-  // غلاف العرض الفرعي: عنوان + زر رجوع
-  const SubView = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <>
-      <motion.div {...anim} className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-black" style={{ color: C.textMain }}>{title}</h2>
-        <button onClick={() => setView('home')} className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-opacity hover:opacity-80" style={{ backgroundColor: C.primary + '15', color: C.primary }}>
-          <ChevronRight size={13} /> رجوع للرئيسية
-        </button>
-      </motion.div>
-      {children}
-    </>
-  );
-
   // التنقل: من Bottom Bar / Side Bar
   const go = (action: string) => {
     if (action === 'sidebar') { setSbOpen(true); return; }
     if (action === 'support') { const link = R.sideBar.footer.supportLink; if (link) window.open(link, '_blank'); else toast.info('لا يوجد رابط دعم مُعدّ'); return; }
     if (action === 'custom' || action === 'extras') { setView('extras'); return; }
     setView(action);
-    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // اختياري (?.) لأن بعض البيئات/الـ DOM المصغّر لا يوفّر scrollTo
+    mainRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' });
+    window.scrollTo?.({ top: 0, behavior: 'smooth' });
   };
 
   // فلترة النصوص والعناصر
@@ -222,68 +399,7 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
   const separateSections = activeSections.filter(s => s.location === 'separate' || s.location === 'sidebar').sort((a, b) => a.order - b.order);
   const expandedCalEvents = useMemo(() => expandEvents(R.calendar.events), [R.calendar.events]);
 
-  // نص مخصص متكرر
-  const CustomTextCard = ({ t }: { t: typeof R.texts[number] }) => (
-    <motion.div key={t.id} {...anim} className={`${rd} p-3 mb-4 ${t.border === 'frame' ? 'border-2' : t.border === 'edges' ? 'border-t-2 border-b-2' : ''} flex items-start gap-2`}
-      style={{ backgroundColor: t.bgType === 'color' ? t.bgValue : C.bgCards, borderColor: t.bgType === 'color' && t.bgValue ? t.bgValue : C.primary, textAlign: (t.align as any) || 'right' }}>
-      {t.icon && t.icon !== 'star' && <span className="mt-0.5"><Ic n={t.icon} s={15} c={t.color || C.primary} /></span>}
-      <div className="flex-1">
-        {t.title && <p className={`font-bold mb-1 ${t.size === 'small' ? 'text-xs' : t.size === 'large' ? 'text-base' : 'text-sm'}`} style={{ color: t.color || C.textMain }}>{t.title}</p>}
-        <p className={`${t.size === 'small' ? 'text-xs' : t.size === 'large' ? 'text-base' : 'text-sm'}`} style={{ color: t.color || C.textSecondary }}>{rv(t.content, sub, sOps)}</p>
-      </div>
-    </motion.div>
-  );
-
-  // تنبيه ملوّن
-  const AlertCard = ({ a }: { a: typeof R.alerts[number] }) => {
-    const ac: Record<string, { bg: string; tx: string; bd: string }> = { info: { bg: '#eff6ff', tx: '#1e40af', bd: '#bfdbfe' }, success: { bg: '#f0fdf4', tx: '#166534', bd: '#bbf7d0' }, warning: { bg: '#fffbeb', tx: '#92400e', bd: '#fde68a' }, danger: { bg: '#fef2f2', tx: '#991b1b', bd: '#fecaca' } };
-    const c = ac[a.type] || ac.info;
-    return (
-      <motion.div {...anim} className={`${rd} p-3 mb-4 flex items-center gap-2`} style={{ backgroundColor: c.bg, border: `1px solid ${c.bd}` }}>
-        <AlertCircle size={16} style={{ color: c.tx }} />
-        <p className="text-sm flex-1" style={{ color: c.tx }}>{a.text}</p>
-        {a.closable && <button onClick={() => setClosedAlerts(prev => new Set(prev).add(a.id))} className="p-1 rounded-full hover:bg-black/10"><X size={12} /></button>}
-      </motion.div>
-    );
-  };
-
-  // بطاقة قسم مخصص (تُستخدم في الرئيسية والصفحات المستقلة)
-  const SectionCard = ({ sec }: { sec: typeof R.sections[number] }) => {
-    const [open, setOpen] = useState(sec.defaultState !== 'closed');
-    const body = (
-      <>
-        {sec.description && <p className="text-sm mb-3" style={{ color: C.textSecondary, lineHeight: '1.8' }}>{sec.description}</p>}
-        {sec.images.length > 0 && <div className={`${sec.imageDisplay === 'grid' ? 'grid grid-cols-2 gap-2' : sec.imageDisplay === 'single' ? '' : 'flex gap-2 overflow-x-auto pb-2 snap-x'}`}>
-          {sec.images.map((img, i) => (
-            <img key={i} src={img} alt={`${sec.title} ${i + 1}`} onClick={() => setLightbox(img)} className={`${sec.imageSize === 'small' ? 'w-20 h-20' : sec.imageSize === 'medium' ? 'w-40 h-40' : sec.imageSize === 'large' ? 'w-full h-56' : 'w-full h-72'} ${sec.imageDisplay === 'single' || sec.imageSize === 'large' || sec.imageSize === 'fullscreen' ? 'w-full' : ''} ${rd} object-cover flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity ${sec.imageDisplay === 'carousel' || sec.imageDisplay === 'slider' ? 'snap-center' : ''}`} />
-          ))}
-        </div>}
-        {sec.videoUrl && <div className="mt-3 aspect-video rounded-lg overflow-hidden"><iframe src={sec.videoUrl.replace('watch?v=', 'embed/')} className="w-full h-full" allowFullScreen title={sec.title} /></div>}
-        {sec.buttons.length > 0 && <div className="flex flex-wrap gap-2 mt-3">{sec.buttons.map(btn => <a key={btn.id} href={btn.url || '#'} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-lg text-xs font-bold text-white flex items-center gap-1.5 hover:opacity-90" style={{ backgroundColor: btn.color || C.primary }}>{btn.label} <ExternalLink size={11} /></a>)}</div>}
-      </>
-    );
-    if (sec.collapsible) {
-      return (
-        <Card key={sec.id} className={`mb-4 ${sec.style === 'frame' ? 'border-2' : ''}`} style={{ backgroundColor: sec.bgColor || C.bgCards, borderColor: sec.style === 'frame' ? C.borders : undefined }}>
-          <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-2">
-            <Ic n={sec.icon} s={16} c={C.primary} />
-            <h3 className="font-bold text-sm flex-1 text-right" style={{ color: C.textMain }}>{sec.title}</h3>
-            {sec.subtitle && <span className="text-xs" style={{ color: C.textSecondary }}>{sec.subtitle}</span>}
-            <ChevronLeft size={14} className={`transition-transform ${open ? '-rotate-90' : ''}`} style={{ color: C.textSecondary }} />
-          </button>
-          {open && <div className="mt-3">{body}</div>}
-        </Card>
-      );
-    }
-    return (
-      <Card key={sec.id} className={`mb-4 ${sec.style === 'frame' ? 'border-2' : ''}`} style={{ backgroundColor: sec.bgColor || C.bgCards, borderColor: sec.style === 'frame' ? C.borders : undefined }}>
-        <div className="flex items-center gap-2 mb-2"><Ic n={sec.icon} s={16} c={C.primary} /><h3 className="font-bold text-sm" style={{ color: C.textMain }}>{sec.title}</h3>{sec.subtitle && <span className="text-xs" style={{ color: C.textSecondary }}>{sec.subtitle}</span>}</div>
-        {body}
-      </Card>
-    );
-  };
-
-  // ═══ بطاقات مالية (تُستخدم في الرئيسية + محفظتي) ═══
+  // ═══ بطاقات مالية (تُستخدم في الرئيسية + محفظة المستثمر) ═══
   const financialCards = (
     <div className={`grid ${gridCls} ${gap} mb-6`}>
       {sub.subscriptionAmount > 0 && <Card delay={0}><div className="flex items-center gap-2 mb-2"><div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: C.primary + '15' }}><Wallet size={16} style={{ color: C.primary }} /></div><span className="text-xs" style={{ color: C.textSecondary }}>مبلغ الاشتراك</span></div><p className="text-xl font-bold" style={{ color: C.textMain }}>{sub.subscriptionAmount.toLocaleString()} <span className="text-xs">{curSym(sub.subscriptionCurrencySymbol, sub.subscriptionCurrency)}</span></p></Card>}
@@ -452,8 +568,8 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
           <Card>
             <h3 className="font-bold text-sm mb-3" style={{ color: C.textMain }}>🧩 أدوات إضافية</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {R.widgets.liveClock && <div className="text-center p-2 rounded-lg" style={{ backgroundColor: C.bgMain }}><p className="text-lg font-bold tabular-nums" style={{ color: C.primary }}>{now.toLocaleTimeString('ar-SA')}</p><p className="text-[10px]" style={{ color: C.textSecondary }}>الوقت الآن</p></div>}
-              {R.widgets.hijriDate && <div className="text-center p-2 rounded-lg" style={{ backgroundColor: C.bgMain }}><p className="text-[11px] font-bold leading-5" style={{ color: C.primary }}>{now.toLocaleDateString('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' })}</p><p className="text-[10px]" style={{ color: C.textSecondary }}>التاريخ الهجري</p></div>}
+              {R.widgets.liveClock && <LiveClockTile />}
+              {R.widgets.hijriDate && <HijriDateTile />}
               {R.widgets.currencyRates && <div className="text-center p-2 rounded-lg" style={{ backgroundColor: C.bgMain }}><DollarSign size={16} className="mx-auto" style={{ color: C.success }} /><p className="text-sm font-bold" style={{ color: C.textMain }}>1 USD = 3.75 SAR</p><p className="text-[9px]" style={{ color: C.textSecondary }}>سعر الصرف · أسعار تقريبية</p></div>}
               {R.widgets.goldPrice && <div className="text-center p-2 rounded-lg" style={{ backgroundColor: C.bgMain }}><Coins size={16} className="mx-auto" style={{ color: '#d4af37' }} /><p className="text-sm font-bold" style={{ color: C.textMain }}>285 ر.س / جرام</p><p className="text-[9px]" style={{ color: C.textSecondary }}>الذهب 24 · أسعار تقريبية</p></div>}
               {R.widgets.btcPrice && <div className="text-center p-2 rounded-lg" style={{ backgroundColor: C.bgMain }}><Bitcoin size={16} className="mx-auto" style={{ color: '#f7931a' }} /><p className="text-sm font-bold" style={{ color: C.textMain }}>≈ $97,000</p><p className="text-[9px]" style={{ color: C.textSecondary }}>بيتكوين · أسعار تقريبية</p></div>}
@@ -579,6 +695,7 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
   const bbVisibleCount = R.bottomBar.buttons.filter(b => b.visible).length;
 
   return (
+    <SkinCtx.Provider value={skin}>
     <div
       className="min-h-screen relative"
       style={{ ...bgStyle(), color: C.textMain, fontFamily: `'${R.design.fonts.body}', sans-serif`, fontSize: fSize, fontWeight: fWeight, lineHeight: fLine, direction: R.design.fonts.direction }}
@@ -741,13 +858,7 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
           </Card>}
 
           {/* العد التنازلي */}
-          {R.countdowns.filter(c => c.visible && c.targetDate).length > 0 && <div className={`grid ${gap} mb-6 ${R.countdowns.filter(c => c.visible).length > 1 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-            {R.countdowns.filter(c => c.visible && c.targetDate).sort((a, b) => a.order - b.order).map(cd => {
-              const target = new Date(cd.targetDate + (cd.targetTime ? 'T' + cd.targetTime : '')); const diff = Math.max(0, target.getTime() - now.getTime());
-              const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
-              return <Card key={cd.id} className="text-center"><p className="text-xs font-bold mb-2" style={{ color: cd.color }}>{cd.title}</p><div className="flex justify-center gap-2">{[{ v: d, l: 'يوم' }, { v: h, l: 'ساعة' }, { v: m, l: 'دقيقة' }, { v: s, l: 'ثانية' }].map((t, i) => <div key={i} className="px-3 py-2 rounded-lg" style={{ backgroundColor: cd.color + '15' }}><p className="text-lg font-black tabular-nums" style={{ color: cd.color }}>{t.v}</p><p className="text-[9px]" style={{ color: C.textSecondary }}>{t.l}</p></div>)}</div></Card>;
-            })}
-          </div>}
+          <CountdownCards items={R.countdowns} />
 
           {/* الأوسمة */}
           {R.achievements.filter(a => a.visible).length > 0 && <Card className="mb-6"><h3 className="font-bold text-sm mb-3" style={{ color: C.textMain }}>🏆 الأوسمة</h3>
@@ -854,9 +965,9 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
           </Card>}
         </>}
 
-        {/* ─── عرض: محفظتي ─── */}
+        {/* ─── عرض: محفظة المستثمر ─── */}
         {view === 'wallet' && (
-          <SubView title="💼 محفظتي">
+          <SubView title={`💼 ${WALLET_SECTION_TITLE}`}>
             {financialCards}
             {walletCard}
             {R.company.name && <Card className="mb-6"><div className="flex items-center gap-3">{R.company.logo && <img src={R.company.logo} className="w-10 h-10 rounded-lg object-contain" alt="logo" />}<div><p className="font-bold text-sm" style={{ color: C.textMain }}>{R.company.name}</p>{R.company.description && <p className="text-xs" style={{ color: C.textSecondary }}>{R.company.description}</p>}</div></div></Card>}
@@ -893,13 +1004,7 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
                 <div key={p.id} className="mb-3"><div className="flex justify-between mb-1"><span className="text-xs font-bold" style={{ color: C.textMain }}>{p.title}</span><span className="text-xs" style={{ color: C.textSecondary }}>{pct}%</span></div><div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: C.borders }}><motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1.2 }} style={{ backgroundColor: p.color }} /></div></div>
               ); })}
             </Card>}
-            {R.countdowns.filter(c => c.visible && c.targetDate).length > 0 && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {R.countdowns.filter(c => c.visible && c.targetDate).map(cd => {
-                const target = new Date(cd.targetDate + (cd.targetTime ? 'T' + cd.targetTime : '')); const diff = Math.max(0, target.getTime() - now.getTime());
-                const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000);
-                return <Card key={cd.id} className="text-center"><p className="text-xs font-bold mb-1" style={{ color: cd.color }}>{cd.title}</p><p className="text-2xl font-black tabular-nums" style={{ color: cd.color }}>{d} <span className="text-xs">يوم</span> {h} <span className="text-xs">ساعة</span></p></Card>;
-              })}
-            </div>}
+            <CountdownCards items={R.countdowns} variant="compact" />
           </SubView>
         )}
 
@@ -1077,5 +1182,6 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
         </motion.div>
       )}</AnimatePresence>
     </div>
+    </SkinCtx.Provider>
   );
 }
