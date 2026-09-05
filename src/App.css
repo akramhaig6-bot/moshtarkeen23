@@ -70,12 +70,97 @@ select {
     linear-gradient(135deg, #0f172a 0%, #172554 54%, #1e1b4b 100%);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   وحدة الاستعلام v2 — Premium Fintech Console
+   ═══════════════════════════════════════════════════════════════ */
+
+/* واجهة البحث الرئيسية: كحلي عميق + هالات indigo/cyan + شبكة نقاط دقيقة */
+.enterprise-shell .qx-hero {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(52rem 26rem at 88% -12%, rgba(99, 102, 241, 0.40), transparent 62%),
+    radial-gradient(38rem 22rem at 6% 112%, rgba(8, 145, 178, 0.30), transparent 60%),
+    radial-gradient(26rem 16rem at 55% 45%, rgba(217, 70, 239, 0.07), transparent 65%),
+    linear-gradient(143deg, #0a1120 0%, #0e1830 46%, #111c3d 100%);
+}
+
+.enterprise-shell .qx-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1.4px);
+  background-size: 23px 23px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 25%, transparent 78%);
+}
+
+/* خط ذهبي/فولاذي علوي رفيع — لمسة Premium */
+.enterprise-shell .qx-hero::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  z-index: 1;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(34, 211, 238, 0.65) 28%,
+    rgba(212, 175, 55, 0.85) 50%,
+    rgba(99, 102, 241, 0.65) 72%,
+    transparent);
+  opacity: 0.9;
+}
+
+/* شريط هوية المشترك داخل بطاقة النتيجة */
+.qx-band {
+  position: relative;
+  background:
+    radial-gradient(30rem 14rem at 90% -20%, rgba(99, 102, 241, 0.38), transparent 60%),
+    radial-gradient(22rem 12rem at 5% 130%, rgba(8, 145, 178, 0.26), transparent 60%),
+    linear-gradient(135deg, #0b1220 0%, #111d3d 55%, #171b3c 100%);
+}
+
+/* لمعة متحركة تعبر شريط التقدم أثناء البحث */
+@keyframes qx-sweep {
+  0% { transform: translateX(160%); }
+  100% { transform: translateX(-380%); }
+}
+.qx-sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.qx-sweep::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 32%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: qx-sweep 1.15s linear infinite;
+}
+
+/* شريط تجربة تطبيق العميل المستقلة (CMS) — هوية بنفسجية ملكية */
+.cmsx-chrome {
+  background:
+    radial-gradient(26rem 12rem at 92% -30%, rgba(124, 58, 237, 0.45), transparent 60%),
+    radial-gradient(20rem 10rem at 0% 140%, rgba(37, 99, 235, 0.35), transparent 60%),
+    linear-gradient(135deg, #0c1122 0%, #151a3a 60%, #1a1440 100%);
+}
+
 @media (max-width: 640px) {
   .enterprise-shell main {
     overflow-x: hidden;
   }
 
-  .enterprise-shell .query-hero {
+  .enterprise-shell .query-hero,
+  .enterprise-shell .qx-hero {
     border-radius: 1.25rem;
   }
 
