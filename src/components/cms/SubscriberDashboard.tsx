@@ -21,7 +21,7 @@ const Ic = ({ n, s = 16, c }: { n: string; s?: number; c?: string }) => { const 
 
 // ═══ الاستعلامات (views) ═══
 const NAV_VIEWS = ['home', 'wallet', 'profits', 'operations', 'withdraw', 'account', 'settings'];
-const VIEW_TITLES: Record<string, string> = { home: 'الرئيسية', wallet: WALLET_SECTION_TITLE, profits: 'أرباحي', operations: 'العمليات', withdraw: 'السحب', account: 'حسابي', settings: 'الإعدادات', docs: 'المستندات', extras: 'العروض الجديدة' };
+const VIEW_TITLES: Record<string, string> = { home: 'الرئيسية', wallet: WALLET_SECTION_TITLE, profits: 'أرباحي', operations: 'العمليات', withdraw: 'السحب', account: 'حساب المستثمر', settings: 'الإعدادات', docs: 'المستندات', extras: 'العروض الجديدة' };
 
 // ═══ استبدال المتغيرات ═══
 function rv(text: string, sub: Subscriber, ops: Operation[]): string {
@@ -405,7 +405,7 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
       {sub.subscriptionAmount > 0 && <Card delay={0}><div className="flex items-center gap-2 mb-2"><div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: C.primary + '15' }}><Wallet size={16} style={{ color: C.primary }} /></div><span className="text-xs" style={{ color: C.textSecondary }}>مبلغ الاشتراك</span></div><p className="text-xl font-bold" style={{ color: C.textMain }}>{sub.subscriptionAmount.toLocaleString()} <span className="text-xs">{curSym(sub.subscriptionCurrencySymbol, sub.subscriptionCurrency)}</span></p></Card>}
       {sub.profits > 0 && <Card delay={0.08}><div className="flex items-center gap-2 mb-2"><div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: C.success + '15' }}><TrendingUp size={16} style={{ color: C.success }} /></div><span className="text-xs" style={{ color: C.textSecondary }}>الأرباح</span></div><p className="text-xl font-bold" style={{ color: C.success }}>{sub.profits.toLocaleString()} <span className="text-xs">{curSym(sub.profitsCurrencySymbol, sub.profitsCurrency)}</span></p></Card>}
       {sub.systemFees > 0 && <Card delay={0.16}><div className="flex items-center gap-2 mb-2"><div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: C.warning + '15' }}><AlertCircle size={16} style={{ color: C.warning }} /></div><span className="text-xs" style={{ color: C.textSecondary }}>رسوم النظام</span></div><p className="text-xl font-bold" style={{ color: C.warning }}>{sub.systemFees.toLocaleString()} <span className="text-xs">{curSym(sub.systemFeesCurrencySymbol, sub.systemFeesCurrency)}</span></p></Card>}
-      <Card delay={0.24}><div className="flex items-center gap-2 mb-2"><div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: C.secondary + '15' }}><CreditCard size={16} style={{ color: C.secondary }} /></div><span className="text-xs" style={{ color: C.textSecondary }}>الصافي المتاح</span></div><p className="text-xl font-bold" style={{ color: C.textMain }}>{netBalance.toLocaleString()}</p></Card>
+
     </div>
   );
 
@@ -1031,7 +1031,7 @@ export function SubscriberDashboard({ subscriber: sub, operations: ops, cms }: {
 
         {/* ─── عرض: حسابي ─── */}
         {view === 'account' && (
-          <SubView title="👤 حسابي">
+          <SubView title="👤 حساب المستثمر">
             {profileCard}
             {accountDetailsCard}
             {walletCard}

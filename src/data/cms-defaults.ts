@@ -25,7 +25,7 @@ export const DEFAULT_CMS: SubscriberCMS = {
     { id: uid(), icon: 'home', label: 'الرئيسية', action: 'home', highlighted: false, color: '#3b82f6', badge: 0, visible: true, order: 0 },
     { id: uid(), icon: 'wallet', label: 'المحفظة', action: 'wallet', highlighted: false, color: '#10b981', badge: 0, visible: true, order: 1 },
     { id: uid(), icon: 'withdraw', label: 'السحب', action: 'withdraw', highlighted: true, color: '#f59e0b', badge: 0, visible: true, order: 2 },
-    { id: uid(), icon: 'account', label: 'حسابي', action: 'account', highlighted: false, color: '#8b5cf6', badge: 0, visible: true, order: 3 },
+    { id: uid(), icon: 'account', label: 'حساب المستثمر', action: 'account', highlighted: false, color: '#8b5cf6', badge: 0, visible: true, order: 3 },
   ]},
   sideBar: { enabled: true, position: 'right', behavior: 'press-only', defaultState: 'closed', width: 'normal', bgColor: '#ffffff', bgGradient: '', shadow: 'strong',
     header: { showAvatar: true, showName: true, showStatus: true, showMemberNumber: false, showSettings: true },
