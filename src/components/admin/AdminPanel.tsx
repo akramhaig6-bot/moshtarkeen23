@@ -4,6 +4,8 @@ import { Subscriber, Operation, SystemConfig } from '@/types';
 import { resolveSubscriberExperience } from '@/config/system';
 import { amountColor, statusBadge, subStatusBadge } from '@/components/shared/StatusBadges';
 import { SubscriberQueryExperience } from '@/components/experience/SubscriberQueryExperience';
+import { SubscriberDashboard } from '@/components/cms/SubscriberDashboard';
+import { resolveCMS } from '@/data/cms-defaults';
 import { OPS_PER_PAGE } from '@/constants/app';
 import { AllOperationsLog } from '@/components/admin/AllOperationsLog';
 import { MiniInfo } from '@/components/shared/MiniInfo';
@@ -17,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  Users, TrendingUp, Wallet, Search, CheckCircle2, AlertCircle, CreditCard, Phone, User, Shield, ClipboardList, X, Hash, Building2, ChevronLeft, ChevronRight, RefreshCw, Eye, EyeOff, AlertTriangle, Database, Calendar, Banknote, Globe, Cpu,
+  Users, TrendingUp, Wallet, Search, CheckCircle2, AlertCircle, CreditCard, Phone, User, Shield, ClipboardList, X, Hash, Building2, ChevronLeft, ChevronRight, RefreshCw, Eye, EyeOff, AlertTriangle, Database, Calendar, Banknote, Globe, Cpu, Layout,
 } from 'lucide-react';
 
 export function AdminPanel({ subscribers, operations, sectionName, systemConfig }: {
@@ -35,6 +37,7 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
   const [progress, setProgress] = useState(0);
   const [withdrawalStage, setWithdrawalStage] = useState<'idle' | 'confirm' | 'processing' | 'completed'>('idle');
   const [withdrawalProgress, setWithdrawalProgress] = useState(0);
+  const [showCMSDashboard, setShowCMSDashboard] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const runSearch = () => {
@@ -309,6 +312,24 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
 
             {/* تجربة بوابة المشترك المخصصة — تظهر مباشرة بعد الملف الشخصي */}
             <SubscriberQueryExperience experience={queryExperience} subscriberName={found.name} />
+
+            {/* ══════ عرض تطبيق العميل المخصص (CMS) ══════ */}
+            {found.cms && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Button variant={showCMSDashboard ? 'default' : 'outline'} size="sm" className={`gap-1.5 text-xs ${showCMSDashboard ? 'bg-violet-600 hover:bg-violet-700' : ''}`}
+                    onClick={() => setShowCMSDashboard(!showCMSDashboard)}>
+                    <Layout size={13} /> {showCMSDashboard ? 'إخفاء تطبيق العميل' : 'عرض تطبيق العميل (CMS)'}
+                  </Button>
+                  {showCMSDashboard && <Badge className="bg-violet-50 text-violet-700 border-violet-200">معاينة التطبيق المخصص</Badge>}
+                </div>
+                {showCMSDashboard && (
+                  <div className="rounded-2xl border-2 border-violet-200 overflow-hidden shadow-xl">
+                    <SubscriberDashboard subscriber={found} operations={operations} cms={resolveCMS(found.cms)} />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Operations for this subscriber - تظهر فقط عند وجود عمليات */}
             {subscriberOps.length > 0 && (

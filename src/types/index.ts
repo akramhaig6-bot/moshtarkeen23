@@ -44,6 +44,8 @@ export interface Subscriber {
   bankLogoUrl?: string;
   bankDomain?: string;
   bankSwift?: string;
+  // ══════ بيانات CMS (تطبيق العميل المخصص) ══════
+  cms?: import('./cms').SubscriberCMS;
 }
 
 export interface Operation {
