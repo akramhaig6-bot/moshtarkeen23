@@ -10,10 +10,17 @@ const DARK_COLORS = { primary: '#60a5fa', secondary: '#a78bfa', success: '#34d39
 const DEFAULT_BG: BackgroundSettings = { type: 'color', color: '#f8fafc', gradient: 'linear-gradient(135deg, #f8fafc, #e2e8f0)', gradientDirection: '135deg', image: '', opacity: 100, blur: 0, fixed: false };
 const DEFAULT_QUERY: QueryScreenSettings = { method: 'phone', fields: 1, bgColor: '#0f172a', bgType: 'gradient', bgValue: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #312e81 100%)', showLogo: true, welcomeTitle: 'بوابة الاستعلام', welcomeDesc: 'أدخل بياناتك للوصول إلى حسابك', inputStyle: 'glass', buttonColor: '#3b82f6', buttonIcon: 'search', loadingText: 'جارٍ البحث...', errorText: 'لم يتم العثور على بيانات', successText: 'تم العثور على البيانات بنجاح', transition: 'fade', layout: 'dashboard', grid: 2, swipeNav: true };
 
+// ═══ تسمية قسم المحفظة في تطبيق العميل ═══
+// البيانات القديمة المحفوظة في localStorage تحمل تسميات («محفظتي»، «محفظتي الاستثمارية»…)
+// تُرحَّل هنا — نقطة الحل الوحيدة — حتى تظهر التسمية المعتمدة دون تعديل كل سجل على حدة.
+export const WALLET_SECTION_TITLE = 'محفظة المستثمر';
+const LEGACY_WALLET_TITLES = new Set(['محفظتي', 'محفظتي الاستثمارية', 'محفظتي الحالية', 'محفظة العميل', 'محفظة العميل المخصصة']);
+const isLegacyWalletTitle = (label?: string) => !!label && LEGACY_WALLET_TITLES.has(label.trim());
+
 export const DEFAULT_CMS: SubscriberCMS = {
   company: { name: '', shortName: '', logo: '', favicon: '', description: '', website: '', email: '', phone: '', whatsappEnabled: false, address: '', commercialReg: '', coverImage: '', social: { instagram: '', twitter: '', telegram: '', tiktok: '', linkedin: '', snapchat: '' }, license: '', licenseImage: '' },
   clientProfile: { avatarType: 'auto', avatarImage: '', avatarShape: 'circle', displayName: '', displayMode: 'original', title: '', memberNumber: '', statusStyle: 'active', badge: 'none', memberLevel: 'none', phoneDisplay: 'full', showCountry: true, showJoinDate: true, personalBio: '', cardBgType: 'gradient', cardBackground: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', nameColor: '#ffffff' },
-  topBar: { enabled: true, showLogo: true, logoType: 'company', logoPosition: 'right', title: 'محفظتي', subtitle: '', showClientName: true, showNotifications: true, showDarkMode: false, showSearch: false, showLanguage: false, showMenu: true, customButtons: [], bgColor: '#ffffff', bgGradient: '', transparency: 'solid', shadow: 'light', height: 'medium', sticky: true, showProgress: false, textColor: '#1e293b' },
+  topBar: { enabled: true, showLogo: true, logoType: 'company', logoPosition: 'right', title: 'محفظة المستثمر', subtitle: '', showClientName: true, showNotifications: true, showDarkMode: false, showSearch: false, showLanguage: false, showMenu: true, customButtons: [], bgColor: '#ffffff', bgGradient: '', transparency: 'solid', shadow: 'light', height: 'medium', sticky: true, showProgress: false, textColor: '#1e293b' },
   bottomBar: { enabled: true, buttonCount: 4, showOnDesktop: false, style: 'raised', bgColor: '#ffffff', shadow: 'light', buttons: [
     { id: uid(), icon: 'home', label: 'الرئيسية', action: 'home', highlighted: false, color: '#3b82f6', badge: 0, visible: true, order: 0 },
     { id: uid(), icon: 'wallet', label: 'المحفظة', action: 'wallet', highlighted: false, color: '#10b981', badge: 0, visible: true, order: 1 },
@@ -80,9 +87,20 @@ export function resolveCMS(cms?: Partial<SubscriberCMS>): SubscriberCMS {
   return {
     company: { ...DEFAULT_CMS.company, ...(cms.company || {}), social: { ...DEFAULT_CMS.company.social, ...(cms.company?.social || {}) } },
     clientProfile: { ...DEFAULT_CMS.clientProfile, ...(cms.clientProfile || {}) },
-    topBar: { ...DEFAULT_CMS.topBar, ...(cms.topBar || {}), customButtons: cms.topBar?.customButtons || [] },
-    bottomBar: { ...DEFAULT_CMS.bottomBar, ...(cms.bottomBar || {}), buttons: cms.bottomBar?.buttons || DEFAULT_CMS.bottomBar.buttons },
-    sideBar: { ...DEFAULT_CMS.sideBar, ...(cms.sideBar || {}), header: { ...DEFAULT_CMS.sideBar.header, ...(cms.sideBar?.header || {}) }, footer: { ...DEFAULT_CMS.sideBar.footer, ...(cms.sideBar?.footer || {}) }, items: cms.sideBar?.items || DEFAULT_CMS.sideBar.items },
+    topBar: { ...DEFAULT_CMS.topBar, ...(cms.topBar || {}), title: isLegacyWalletTitle(cms.topBar?.title) ? WALLET_SECTION_TITLE : (cms.topBar?.title ?? DEFAULT_CMS.topBar.title), customButtons: cms.topBar?.customButtons || [] },
+    bottomBar: {
+      ...DEFAULT_CMS.bottomBar, ...(cms.bottomBar || {}),
+      // أزرار الشريط السفلي تبقى قصيرة («المحفظة») حتى لا تتزاحم مع بقية الأزرار
+      buttons: (cms.bottomBar?.buttons || DEFAULT_CMS.bottomBar.buttons).map(b =>
+        b.action === 'wallet' && isLegacyWalletTitle(b.label) ? { ...b, label: 'المحفظة' } : b),
+    },
+    sideBar: {
+      ...DEFAULT_CMS.sideBar, ...(cms.sideBar || {}),
+      header: { ...DEFAULT_CMS.sideBar.header, ...(cms.sideBar?.header || {}) },
+      footer: { ...DEFAULT_CMS.sideBar.footer, ...(cms.sideBar?.footer || {}) },
+      items: (cms.sideBar?.items || DEFAULT_CMS.sideBar.items).map(it =>
+        it.action === 'wallet' && isLegacyWalletTitle(it.label) ? { ...it, label: WALLET_SECTION_TITLE } : it),
+    },
     texts: cms.texts || [], sections: cms.sections || [],
     infoCards: cms.infoCards || [], charts: cms.charts || [], counters: cms.counters || [],
     achievements: cms.achievements || [], banners: cms.banners || [],

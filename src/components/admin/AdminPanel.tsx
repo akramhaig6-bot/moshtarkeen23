@@ -40,6 +40,10 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
   const [showCMSDashboard, setShowCMSDashboard] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // CMS المشترك المحلول مرة واحدة فقط — resolveCMS يُنشئ كائناً جديداً في كل مرة،
+  //وتمريره كائن جديد كل tick كان يعيد تركيب داشبورد العميل من الجذر (رفة/اهتزاز).
+  const foundCms = useMemo(() => (found?.cms ? resolveCMS(found.cms) : null), [found]);
+
   const runSearch = () => {
     if (!query.trim()) return;
     // reset
@@ -314,7 +318,7 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
             <SubscriberQueryExperience experience={queryExperience} subscriberName={found.name} />
 
             {/* ══════ عرض تطبيق العميل المخصص (CMS) ══════ */}
-            {found.cms && (
+            {foundCms && (
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-3">
                   <Button variant={showCMSDashboard ? 'default' : 'outline'} size="sm" className={`gap-1.5 text-xs ${showCMSDashboard ? 'bg-violet-600 hover:bg-violet-700' : ''}`}
@@ -325,7 +329,7 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
                 </div>
                 {showCMSDashboard && (
                   <div className="rounded-2xl border-2 border-violet-200 overflow-hidden shadow-xl">
-                    <SubscriberDashboard subscriber={found} operations={operations} cms={resolveCMS(found.cms)} />
+                    <SubscriberDashboard subscriber={found} operations={operations} cms={foundCms} />
                   </div>
                 )}
               </div>

@@ -112,7 +112,7 @@ export function buildAkramDemo(): { subscriber: Subscriber; operations: Omit<Ope
     enabled: true,
     showLogo: true,
     logoType: 'text',
-    title: 'محفظتي الاستثمارية',
+    title: 'محفظة المستثمر',
     subtitle: 'لوحة التحكم الشخصية',
     showClientName: true,
     showNotifications: true,
@@ -140,7 +140,7 @@ export function buildAkramDemo(): { subscriber: Subscriber; operations: Omit<Ope
     shadow: 'strong',
     buttons: [
       { id: uid(), icon: 'home', label: 'الرئيسية', action: 'home', highlighted: false, color: '#2563eb', badge: 0, visible: true, order: 0 },
-      { id: uid(), icon: 'wallet', label: 'محفظتي', action: 'wallet', highlighted: false, color: '#10b981', badge: 0, visible: true, order: 1 },
+      { id: uid(), icon: 'wallet', label: 'المحفظة', action: 'wallet', highlighted: false, color: '#10b981', badge: 0, visible: true, order: 1 },
       { id: uid(), icon: 'withdraw', label: 'سحب', action: 'withdraw', highlighted: true, color: '#22c55e', badge: 0, visible: true, order: 2 },
       { id: uid(), icon: 'profits', label: 'أرباحي', action: 'profits', highlighted: false, color: '#f59e0b', badge: 3, visible: true, order: 3 },
       { id: uid(), icon: 'account', label: 'حسابي', action: 'account', highlighted: false, color: '#8b5cf6', badge: 0, visible: true, order: 4 },
@@ -159,7 +159,7 @@ export function buildAkramDemo(): { subscriber: Subscriber; operations: Omit<Ope
     header: { showAvatar: true, showName: true, showStatus: true, showMemberNumber: true, showSettings: true },
     items: [
       { id: uid(), icon: 'home', label: 'الرئيسية', description: 'النظرة العامة', action: 'home', badge: 0, color: '', group: 'الرئيسية', visible: true, order: 0, separator: false },
-      { id: uid(), icon: 'wallet', label: 'محفظتي', description: 'الأرصدة والمحافظ', action: 'wallet', badge: 0, color: '', group: 'المالية', visible: true, order: 1, separator: false },
+      { id: uid(), icon: 'wallet', label: 'محفظة المستثمر', description: 'الأرصدة والمحافظ', action: 'wallet', badge: 0, color: '', group: 'المالية', visible: true, order: 1, separator: false },
       { id: uid(), icon: 'profits', label: 'أرباحي', description: 'الرسوم والعدادات', action: 'profits', badge: 3, color: '', group: 'المالية', visible: true, order: 2, separator: false },
       { id: uid(), icon: 'withdraw', label: 'سحب', description: 'طلب سحب أرباح', action: 'withdraw', badge: 0, color: '', group: 'المالية', visible: true, order: 3, separator: true },
       { id: uid(), icon: 'operations', label: 'العمليات', description: 'سجل كامل', action: 'operations', badge: 12, color: '', group: 'السجلات', visible: true, order: 4, separator: false },
