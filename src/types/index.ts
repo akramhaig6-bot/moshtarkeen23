@@ -154,4 +154,4 @@ export interface LiveStats {
   totalSubsCount: string; activationOpsStr: string;
 }
 
-export type Tab = 'dashboard' | 'admin' | 'addOperations' | 'addSubscriber' | 'systemAdmin' | 'advanced' | 'reports' | 'settings';
+export type Tab = 'dashboard' | 'admin' | 'addOperations' | 'addSubscriber' | 'systemAdmin' | 'advanced' | 'reports' | 'settings' | 'appBuilder';
