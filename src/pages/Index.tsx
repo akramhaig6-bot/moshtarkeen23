@@ -19,13 +19,14 @@ import { AdvancedSystemTab } from '@/components/advanced/AdvancedSystemTab';
 import { ReportsTab } from '@/components/reports/ReportsTab';
 import { SettingsTab } from '@/components/settings/SettingsTab';
 import { CommandPalette } from '@/components/command-palette/CommandPalette';
+import { AppBuilderTab } from '@/components/app-builder/AppBuilderTab';
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
-  Users, LayoutDashboard, Settings, Bell, LogOut, User, Shield, ClipboardList, UserPlus, ChevronLeft, Lock, Database, PanelLeftClose, PanelLeftOpen, SlidersHorizontal, CalendarClock, Sparkles, Crown, Moon, Sun, Command, BarChart2,
+  Users, LayoutDashboard, Settings, Bell, LogOut, User, Shield, ClipboardList, UserPlus, ChevronLeft, Lock, Database, PanelLeftClose, PanelLeftOpen, SlidersHorizontal, CalendarClock, Sparkles, Crown, Moon, Sun, Command, BarChart2, Hammer,
 } from 'lucide-react';
 
 export default function Index() {
@@ -84,6 +85,7 @@ export default function Index() {
     { tab: 'admin', icon: <Shield size={20} />, label: sn.admin },
     { tab: 'addOperations', icon: <ClipboardList size={20} />, label: sn.addOperations },
     { tab: 'addSubscriber', icon: <UserPlus size={20} />, label: sn.addSubscriber },
+    { tab: 'appBuilder', icon: <Hammer size={20} />, label: 'بناء تطبيق العميل' },
     { tab: 'reports', icon: <BarChart2 size={20} />, label: 'التقارير' },
     { tab: 'settings', icon: <Settings size={20} />, label: 'الإعدادات' },
   ];
@@ -347,6 +349,12 @@ export default function Index() {
               <AddSubscriberTab subscribers={subscribers} onSubscribersChange={setSubscribers} sectionName={sn.addSubscriber} operations={operations} onOperationsChange={setOperations} systemConfig={systemConfig} onConfigChange={updateConfig} />
             </motion.div>
           )}
+          {activeTab === 'appBuilder' && (
+            <motion.div key="appBuilder" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="p-4 lg:p-8 space-y-6 max-w-[1600px] mx-auto w-full">
+              <AppBuilderTab subscribers={subscribers} operations={operations} />
+            </motion.div>
+          )}
           {activeTab === 'advanced' && (
             <motion.div key="advanced" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="w-full">
@@ -479,6 +487,7 @@ export default function Index() {
               {activeTab === 'admin' && <motion.div key="adm" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><AdminPanel subscribers={subscribers} operations={operations} sectionName={sn.admin} systemConfig={systemConfig} /></motion.div>}
               {activeTab === 'addOperations' && <motion.div key="ao" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><AddOperationsTab operations={operations} onOperationsChange={setOperations} subscriberNames={subscribers.map(s => s.name)} sectionName={sn.addOperations} /></motion.div>}
                {activeTab === 'addSubscriber' && <motion.div key="as" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><AddSubscriberTab subscribers={subscribers} onSubscribersChange={setSubscribers} sectionName={sn.addSubscriber} operations={operations} onOperationsChange={setOperations} systemConfig={systemConfig} onConfigChange={updateConfig} /></motion.div>}
+              {activeTab === 'appBuilder' && <motion.div key="ab" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><AppBuilderTab subscribers={subscribers} operations={operations} /></motion.div>}
               {activeTab === 'reports' && <motion.div key="rep" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><ReportsTab subscribers={subscribers} operations={operations} /></motion.div>}
               {activeTab === 'settings' && <motion.div key="set" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 space-y-3 max-w-[1600px] mx-auto w-full"><SettingsTab isDark={isDark} onDarkToggle={() => setIsDark(!isDark)} subscribers={subscribers} operations={operations} systemConfig={systemConfig} onSubscribersChange={setSubscribers} onOperationsChange={setOperations} onConfigChange={updateConfig} /></motion.div>}
             </AnimatePresence>

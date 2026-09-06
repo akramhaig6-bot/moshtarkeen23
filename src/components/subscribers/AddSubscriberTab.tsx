@@ -14,6 +14,9 @@ import { resolveSubscriberExperience } from '@/config/system';
 import { uid, todayStr } from '@/lib/random';
 import { SubscriberExperienceBuilder } from '@/components/experience/SubscriberExperienceBuilder';
 import { CMSBuilder } from '@/components/cms/CMSBuilder';
+import { AppBuilderLaunchButton } from '@/components/app-builder/AppBuilderTab';
+import { AppBuilderPanel } from '@/components/app-builder/AppBuilderPanel';
+import { useAppBuilderStore } from '@/hooks/use-app-builder';
 import { DEFAULT_CMS, resolveCMS } from '@/data/cms-defaults';
 import { buildAkramDemo } from '@/data/akram-demo';
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -81,6 +84,8 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
   const [cmsData, setCmsData] = useState(() => resolveCMS(undefined));
   // المعاينة الحية + البيانات التجريبية
   const [showPreview, setShowPreview] = useState(false);
+  const [showAppBuilder, setShowAppBuilder] = useState(false);
+  const appStore = useAppBuilderStore();
   const [previewDevice, setPreviewDevice] = useState<375 | 768 | 1280>(375);
   const [showDemoConfirm, setShowDemoConfirm] = useState(false);
   // لقطة مؤجلة (debounce 500ms) تُكتب للمعاينة الحية (iframe /preview)
@@ -1014,7 +1019,12 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
 
           {/* ══════════ استوديو تصميم تطبيق العميل (CMS) ══════════ */}
           <div className="mt-8 pt-6 border-t border-slate-200">
-            <CMSBuilder cms={cmsData} onChange={setCmsData} subscribers={subscribers} />
+            <CMSBuilder cms={cmsData} onChange={setCmsData} subscribers={subscribers} onOpenAppBuilder={() => setShowAppBuilder(true)} appsCount={(appStore.store.projects || []).length} />
+          </div>
+
+          {/* ══════════ 🏗️ بناء تطبيق العميل — قسم مستقل بلا حدود ══════════ */}
+          <div className="mt-8 pt-6 border-t border-slate-200">
+            <AppBuilderLaunchButton onOpen={() => setShowAppBuilder(true)} count={(appStore.store.projects || []).length} />
           </div>
 
           <div className="flex items-center gap-3 mt-5 flex-wrap">
@@ -1076,6 +1086,13 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ══════════ قسم بناء تطبيق العميل (ملء الشاشة) ══════════ */}
+      <AnimatePresence>
+        {showAppBuilder && (
+          <AppBuilderPanel key="app-builder-panel" subscribers={subscribers} operations={operations} onClose={() => setShowAppBuilder(false)} />
         )}
       </AnimatePresence>
 

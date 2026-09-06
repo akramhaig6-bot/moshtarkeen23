@@ -10,6 +10,10 @@ import { resolveSubscriberExperience } from '@/config/system';
 import { amountColor, statusBadge, subStatusBadge } from '@/components/shared/StatusBadges';
 import { SubscriberQueryExperience } from '@/components/experience/SubscriberQueryExperience';
 import { CMSExperience } from '@/components/cms/CMSExperience';
+import { AppExperience } from '@/components/app-builder/AppExperience';
+import { useAppBuilderStore } from '@/hooks/use-app-builder';
+import { projectsForSubscriber } from '@/lib/app-builder-runtime-data';
+import { Hammer } from 'lucide-react';
 import { resolveCMS } from '@/data/cms-defaults';
 import { OPS_PER_PAGE } from '@/constants/app';
 import { AllOperationsLog } from '@/components/admin/AllOperationsLog';
@@ -130,6 +134,8 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
   const [withdrawalStage, setWithdrawalStage] = useState<'idle' | 'confirm' | 'processing' | 'completed'>('idle');
   const [withdrawalProgress, setWithdrawalProgress] = useState(0);
   const [showCMSExperience, setShowCMSExperience] = useState(false);
+  const [openedAppId, setOpenedAppId] = useState<string | null>(null);
+  const appStore = useAppBuilderStore();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // CMS المشترك المحلول مرة واحدة فقط — resolveCMS يُنشئ كائناً جديداً في كل مرة،
@@ -148,6 +154,7 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
     setWithdrawalStage('idle');
     setWithdrawalProgress(0);
     setShowCMSExperience(false);
+    setOpenedAppId(null);
 
     let p = 0;
     intervalRef.current = setInterval(() => {
@@ -214,6 +221,7 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
     setQuery(''); setFound(null); setSearched(false); setOpsPage(1);
     setIsSearching(false); setProgress(0); setWithdrawalProgress(0); setWithdrawalStage('idle');
     setShowCMSExperience(false);
+    setOpenedAppId(null);
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
   const queryExperience = resolveSubscriberExperience(systemConfig.subscriberExperience);
@@ -520,6 +528,53 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
               </Card>
             )}
 
+            {/* ── 3.5) تطبيقات مبنية من قسم «بناء تطبيق العميل» ── */}
+            {(() => {
+              const apps = projectsForSubscriber(appStore.store.projects || [], found.id);
+              if (apps.length === 0) return null;
+              return (
+                <Card className="border-none shadow-lg ring-1 ring-amber-200/80 overflow-hidden">
+                  <div className="relative bg-gradient-to-l from-amber-50/90 via-white to-white p-5 lg:p-6 space-y-4">
+                    <span className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-l from-amber-500 via-orange-500 to-rose-500" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
+                        <Hammer size={22} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-base font-black text-slate-800">تطبيقات العميل المبنية</h3>
+                          <Badge className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-black">{apps.length} تطبيق</Badge>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 leading-6">
+                          تطبيقات صُمِّمت من قسم «بناء تطبيق العميل» — تُفتح في واجهة مستقلة بملء الشاشة بتصفحها الخاص.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {apps.map(app => (
+                        <div key={app.id} className="rounded-2xl bg-white ring-1 ring-slate-200 p-3.5 flex items-center gap-3">
+                          {app.logo
+                            ? <img src={app.logo} alt="" className="w-11 h-11 rounded-xl object-contain bg-slate-50 border border-slate-200 flex-shrink-0" />
+                            : <span className="w-11 h-11 rounded-xl flex items-center justify-center text-white flex-shrink-0" style={{ background: app.brandColor }}><Hammer size={18} /></span>}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-black text-slate-800 truncate">{app.name}</p>
+                            <p className="text-[11px] text-slate-400 truncate">
+                              {app.pages.length} صفحة · {app.bars.length} شريط · {app.modals.length} نافذة
+                              {app.published ? ` · v${app.version}` : ' · مسودة'}
+                            </p>
+                          </div>
+                          <Button onClick={() => setOpenedAppId(app.id)}
+                            className="h-10 px-4 rounded-xl gap-1.5 bg-gradient-to-l from-amber-500 to-orange-600 hover:brightness-110 text-white font-black text-xs whitespace-nowrap flex-shrink-0">
+                            <ExternalLink size={14} /> فتح التطبيق
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })()}
+
             {/* ── 4) سجل عمليات المشترك ── */}
             {subscriberOps.length > 0 && (
               <Card className="border-none shadow-sm ring-1 ring-slate-200 overflow-hidden">
@@ -659,6 +714,17 @@ export function AdminPanel({ subscribers, operations, sectionName, systemConfig 
             <AllOperationsLog operations={operations} />
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* ═══════════ تجربة التطبيق المبني (بناء تطبيق العميل) ═══════════ */}
+      <AnimatePresence>
+        {openedAppId && found && (() => {
+          const app = (appStore.store.projects || []).find(a => a.id === openedAppId);
+          if (!app) return null;
+          return (
+            <AppExperience key="app-experience" project={app} subscriber={found} operations={operations} onClose={() => setOpenedAppId(null)} />
+          );
+        })()}
       </AnimatePresence>
 
       {/* ═══════════ تجربة تطبيق العميل المستقلة (CMS) — ملء الشاشة ═══════════ */}

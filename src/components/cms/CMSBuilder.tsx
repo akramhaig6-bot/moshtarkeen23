@@ -66,7 +66,7 @@ type T = 'company' | 'profile' | 'topbar' | 'bottombar' | 'sidebar' | 'colors' |
 type ArrayKey = 'texts' | 'sections' | 'infoCards' | 'charts' | 'counters' | 'achievements' | 'banners' | 'alerts' | 'documents' | 'progressBars' | 'countdowns';
 interface CustomTpl { id: string; name: string; createdAt: string; data: SubscriberCMS; }
 
-export function CMSBuilder({ cms, onChange, subscribers = [] }: { cms: SubscriberCMS; onChange: (c: SubscriberCMS) => void; subscribers?: Subscriber[] }) {
+export function CMSBuilder({ cms, onChange, subscribers = [], onOpenAppBuilder, appsCount = 0 }: { cms: SubscriberCMS; onChange: (c: SubscriberCMS) => void; subscribers?: Subscriber[]; onOpenAppBuilder?: () => void; appsCount?: number }) {
   const [tab, setTab] = useState<T>('company');
 
   // ═══ محدثات موحّدة ═══
@@ -739,6 +739,31 @@ export function CMSBuilder({ cms, onChange, subscribers = [] }: { cms: Subscribe
 
           </div>
         </Tabs>
+
+        {/* ══════════ 🏗️ زر بناء تطبيق العميل (قسم مستقل) ══════════ */}
+        {onOpenAppBuilder && (
+          <div className="mt-5 pt-4 border-t border-slate-200">
+            <div className="rounded-2xl ring-1 ring-amber-200 bg-gradient-to-l from-amber-50 via-white to-white p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <span className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
+                <Sparkles size={20} />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-black text-slate-800">🏗️ بناء تطبيق العميل</p>
+                  <Badge className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-black">بلا حدود</Badge>
+                  {appsCount > 0 && <Badge variant="outline" className="text-[10px]">{appsCount} تطبيق</Badge>}
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 leading-5">
+                  تجاوز حدود CMS: ابنِ تطبيقاً كاملاً بصفحات وأشرطة ونوافذ ومكونات متداخلة وإجراءات — ويظهر في الاستعلام تماماً كتطبيق CMS.
+                </p>
+              </div>
+              <Button type="button" onClick={onOpenAppBuilder}
+                className="h-10 px-5 rounded-xl gap-2 bg-gradient-to-l from-amber-500 to-orange-600 hover:brightness-110 text-white font-black text-xs whitespace-nowrap flex-shrink-0">
+                فتح بيئة البناء
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
