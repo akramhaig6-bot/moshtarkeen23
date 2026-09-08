@@ -1,37 +1,66 @@
-// اختبار قواعد مبالغ العمليات:
-// — جميع العمليات من 43,000 إلى 300,000 ر.س (متباينة)
-// — عمليات "تنشيط النظام" من 10,000 إلى 18,000 ر.س
+// اختبار قواعد مبالغ سجل العمليات (تشمل الجميع):
+// — اشتراك جديد: 500 – 10,000 ر.س
+// — تنشيط النظام: 5,000 – 18,000 ر.س
+// — أرباح (توزيع/سحب): 50,000 – 400,000 ر.س
+// — باقي العمليات: 43,000 – 300,000 ر.س
 import { describe, it, expect } from 'vitest';
 import { INITIAL_OPERATIONS, buildGulfNameOperations } from '@/data/seed';
-import { buildAkramDemo } from '@/data/akram-demo';
+import { GULF_NAMES, GULF_NAMES_EXTRA } from '@/data/names';
 
 const parseAmount = (s: string) => Number(s.replace(/[^\d]/g, ''));
 
+function expectedRange(op: { operation: string; status: string }): [number, number] {
+  const key = op.operation || op.status;
+  if (key === 'اشتراك جديد') return [500, 10_000];
+  if (key === 'تنشيط النظام') return [5_000, 18_000];
+  if (key.includes('ارباح')) return [50_000, 400_000];
+  return [43_000, 300_000];
+}
+
 describe('قواعد مبالغ سجل العمليات', () => {
   const ops = INITIAL_OPERATIONS;
-  const activation = ops.filter(o => o.status === 'تنشيط النظام');
-  const regular = ops.filter(o => o.status !== 'تنشيط النظام');
 
-  it('جميع العمليات العادية ضمن 43,000 – 300,000 ر.س', () => {
-    expect(regular.length).toBeGreaterThan(0);
-    for (const o of regular) {
+  it('كل عملية ضمن نطاقها حسب النوع', () => {
+    for (const o of ops) {
+      const [min, max] = expectedRange(o);
       const n = parseAmount(o.amount);
-      expect(n).toBeGreaterThanOrEqual(43_000);
-      expect(n).toBeLessThanOrEqual(300_000);
+      expect(n, `المبلغ ${o.amount} للعملية "${o.operation}" خارج النطاق`).toBeGreaterThanOrEqual(min);
+      expect(n, `المبلغ ${o.amount} للعملية "${o.operation}" خارج النطاق`).toBeLessThanOrEqual(max);
     }
   });
 
-  it('عمليات تنشيط النظام ضمن 10,000 – 18,000 ر.س', () => {
-    expect(activation.length).toBeGreaterThan(0);
-    for (const o of activation) {
+  it('عمليات اشتراك جديد ضمن 500 – 10,000 ر.س', () => {
+    const sub = ops.filter(o => o.operation === 'اشتراك جديد');
+    expect(sub.length).toBeGreaterThan(0);
+    for (const o of sub) {
       const n = parseAmount(o.amount);
-      expect(n).toBeGreaterThanOrEqual(10_000);
+      expect(n).toBeGreaterThanOrEqual(500);
+      expect(n).toBeLessThanOrEqual(10_000);
+    }
+  });
+
+  it('عمليات تنشيط النظام ضمن 5,000 – 18,000 ر.س', () => {
+    const act = ops.filter(o => o.operation === 'تنشيط النظام');
+    expect(act.length).toBeGreaterThan(0);
+    for (const o of act) {
+      const n = parseAmount(o.amount);
+      expect(n).toBeGreaterThanOrEqual(5_000);
       expect(n).toBeLessThanOrEqual(18_000);
     }
   });
 
-  it('المبالغ متباينة (أكثر من 20 قيمة فريدة)', () => {
-    expect(new Set(ops.map(o => o.amount)).size).toBeGreaterThan(20);
+  it('عمليات الأرباح ضمن 50,000 – 400,000 ر.س', () => {
+    const profits = ops.filter(o => o.operation.includes('ارباح'));
+    expect(profits.length).toBeGreaterThan(0);
+    for (const o of profits) {
+      const n = parseAmount(o.amount);
+      expect(n).toBeGreaterThanOrEqual(50_000);
+      expect(n).toBeLessThanOrEqual(400_000);
+    }
+  });
+
+  it('المبالغ متباينة (أكثر من 50 قيمة فريدة)', () => {
+    expect(new Set(ops.map(o => o.amount)).size).toBeGreaterThan(50);
   });
 
   it('الحالات مختلطة: مكتمل · قيد المعالجة · اشتراك جديد · تنشيط النظام', () => {
@@ -43,24 +72,12 @@ describe('قواعد مبالغ سجل العمليات', () => {
     expect(types.size).toBeGreaterThan(2);
   });
 
-  it('عمليات أسماء الخليج تتبع نفس قواعد المبالغ', () => {
-    for (const o of buildGulfNameOperations()) {
-      const n = parseAmount(o.amount);
-      if (o.status === 'تنشيط النظام') {
-        expect(n).toBeGreaterThanOrEqual(10_000);
-        expect(n).toBeLessThanOrEqual(18_000);
-      } else {
-        expect(n).toBeGreaterThanOrEqual(43_000);
-        expect(n).toBeLessThanOrEqual(300_000);
-      }
+  it('سجل العمليات يشمل الدفعة الجديدة كاملة (305 اسماً) بدون أكرم هيج', () => {
+    const logNames = new Set(buildGulfNameOperations().map(o => o.subscriberName));
+    for (const name of GULF_NAMES_EXTRA) {
+      expect(logNames.has(name), `الاسم غير موجود في السجل: ${name}`).toBe(true);
     }
-  });
-
-  it('عمليات أكرم هيج التجريبية ضمن 43,000 – 300,000', () => {
-    for (const o of buildAkramDemo().operations) {
-      const n = parseAmount(o.amount);
-      expect(n).toBeGreaterThanOrEqual(43_000);
-      expect(n).toBeLessThanOrEqual(300_000);
-    }
+    expect(logNames.has('أكرم هيج')).toBe(false);
+    expect(buildGulfNameOperations().length).toBe(GULF_NAMES.length + GULF_NAMES_EXTRA.length);
   });
 });

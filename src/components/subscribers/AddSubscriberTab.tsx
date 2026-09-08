@@ -382,7 +382,7 @@ export function AddSubscriberTab({ subscribers, onSubscribersChange, sectionName
   const loadDemoData = () => {
     const demo = buildAkramDemo();
     onSubscribersChange([...subscribers, demo.subscriber]);
-    onOperationsChange([...operations, ...demo.operations.map(op => ({ ...op, id: uid() }))]);
+    // ملاحظة: لا تُضاف عمليات "أكرم هيج" إلى سجل العمليات المشترك (مستبعد من السجل)
     setShowDemoConfirm(false);
     toast.success('تمت إضافة المشترك التجريبي "أكرم هيج" بكل بياناته وتصميم CMS الكامل', { duration: 4000 });
   };

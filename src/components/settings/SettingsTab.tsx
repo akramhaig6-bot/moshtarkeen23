@@ -63,7 +63,7 @@ export function SettingsTab({ isDark, onDarkToggle, subscribers, operations, sys
   const resetAll = () => {
     if (!confirm('تحذير: سيتم حذف جميع البيانات وإعادة تعيين النظام. هل أنت متأكد؟')) return;
     localStorage.removeItem('msub_v2');
-    localStorage.removeItem('mops_v4');
+    localStorage.removeItem('mops_v5');
     localStorage.removeItem('msys_config_v2');
     toast.success('تم إعادة تعيين النظام — سيتم تحديث الصفحة');
     setTimeout(() => window.location.reload(), 1500);
