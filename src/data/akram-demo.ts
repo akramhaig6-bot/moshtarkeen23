@@ -60,11 +60,11 @@ export function buildAkramDemo(): { subscriber: Subscriber; operations: Omit<Ope
   };
 
   const operations: Omit<Operation, 'id'>[] = [
-    { subscriberName: 'أكرم هيج', operation: 'توزيع أرباح', amount: '800 USDT', date: '2025-01-01', status: 'مكتمل' },
-    { subscriberName: 'أكرم هيج', operation: 'إيداع', amount: '5,000 USDT', date: '2024-12-15', status: 'مكتمل' },
-    { subscriberName: 'أكرم هيج', operation: 'سحب', amount: '2,000 USDT', date: '2024-11-20', status: 'مكتمل' },
-    { subscriberName: 'أكرم هيج', operation: 'توزيع أرباح', amount: '1,200 USDT', date: '2024-10-01', status: 'مكتمل' },
-    { subscriberName: 'أكرم هيج', operation: 'إيداع', amount: '10,000 USDT', date: '2024-01-15', status: 'مكتمل' },
+    { subscriberName: 'أكرم هيج', operation: 'توزيع أرباح', amount: '86,400 USDT', date: '2025-01-01', status: 'مكتمل' },
+    { subscriberName: 'أكرم هيج', operation: 'إيداع', amount: '240,000 USDT', date: '2024-12-15', status: 'مكتمل' },
+    { subscriberName: 'أكرم هيج', operation: 'سحب', amount: '97,300 USDT', date: '2024-11-20', status: 'مكتمل' },
+    { subscriberName: 'أكرم هيج', operation: 'توزيع أرباح', amount: '58,750 USDT', date: '2024-10-01', status: 'مكتمل' },
+    { subscriberName: 'أكرم هيج', operation: 'إيداع', amount: '275,000 USDT', date: '2024-01-15', status: 'مكتمل' },
   ];
 
   // ═══════════ CMS كامل ═══════════
