@@ -33,7 +33,7 @@ export default function Index() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [subscribers, setSubscribers] = useLocalStorage<Subscriber[]>('msub_v2', INITIAL_SUBSCRIBERS);
-  const [operations, setOperations] = useLocalStorage<Operation[]>('mops_v3', INITIAL_OPERATIONS);
+  const [operations, setOperations] = useLocalStorage<Operation[]>('mops_v5', INITIAL_OPERATIONS);
   const [systemConfig, setSystemConfig] = useLocalStorage<SystemConfig>('msys_config_v2', DEFAULT_SYSTEM_CONFIG);
 
   // ── Dark Mode ──
